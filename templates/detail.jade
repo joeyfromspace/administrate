@@ -1,0 +1,23 @@
+extends ./layout
+
+block content
+  .container
+    .row: .col-xs-12.col-md-offset-2.col-md-10
+      h1=title + ' Detail'
+    .row: .col-xs-12.col-md-offset-2.col-md-10
+      h2!=model.name || model.title || model.label || '&nbsp;'
+        if model._id
+          small.pull-right='id: ' + model._id.toString()
+    .row: .col-xs-12: form.form-horizontal
+      each input in inputs
+        +form-input(input, model)
+      .form-group
+        .col-md-offset-2.col-md-1: button.btn.btn-info.btn-block(type="save" name="save") Save                
+        .col-md-1: a.btn.btn-default.btn-block(type="back" name="back" href=baseUrl + '/' + _.pluralize(title.toLowerCase(), 2)) Back
+        .col-md-1.pull-right: button.btn.btn-danger.btn-block(type="remove" name="remove") Delete
+block scripts
+  script.
+    window.ADMIN_LOCALS.model = !{JSON.stringify(model)};
+    window.ADMIN_LOCALS.modelName = "#{title.toLowerCase()}";
+    window.ADMIN_LOCALS.modelNamePlural = "#{_.pluralize(title.toLowerCase(), 2)}";
+  script(src=baseUrl + '/js/detail.js')

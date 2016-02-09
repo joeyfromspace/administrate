@@ -1,0 +1,33 @@
+{
+  "name": "administrate",
+  "description": "Middleware that provides an admin backend site for Express 4.x and Mongoose models",
+  "license": "MIT",
+  "author": "Joey Lappin (SWARM)",
+  "version": "0.3.5",
+  "engines": {
+    "node": "5.0.0"
+  },
+  "scripts": {
+    "test": "mocha test/ --delay"
+  },
+  "respository": {
+    "type": "git",
+    "url": "https://github.com/joeyfromspace/administrate.git"
+  },
+  "dependencies": {
+    "async": "1.5.2",
+    "jade": "1.11.0",
+    "moment": "2.11.2",
+    "pluralize": "1.2.1",
+    "mongoose": "4.3.6",
+    "underscore": "1.8.3"
+  },
+  "devDependencies": {
+    "chai": "3.4.1",
+    "chai-fuzzy": "1.6.0",
+    "chai-http": "1.0.0",
+    "chai-things": "0.2.0",
+    "faker": "3.0.1",
+    "mocha": "2.3.4"
+  }
+}

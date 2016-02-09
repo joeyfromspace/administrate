@@ -1,0 +1,46 @@
+mixin form-input(input, model)
+  .row: .col-xs-12
+    case input.type
+      when 'text'
+        .form-group
+          label.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
+          .col-xs-12.col-md-10
+            input.form-control(type="text" name=input.name value=model[input.name])
+      when 'checkbox'
+        .form-group: .col-md-offset-2.col-md-10
+          .checkbox
+            label
+              input(type="checkbox" name=input.name checked=model[input.name])
+              =_.toProperCase(input.label)
+      when 'date'        
+        .form-group
+          label.col-xs-12.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
+          .col-xs-12.col-md-10.text-left
+            case input.name
+              when 'createdAt'
+                input.form-control.disabled(type="text" name=input.name disabled value=model[input.name])
+              when 'updatedAt'
+                input.form-control.disabled(type="text" name=input.name disabled value=model[input.name])
+              default
+                input.form-control(type="text" value=model[input.name] name=input.name)
+                          
+mixin header(brand, user, baseUrl, modules, active, logoutLink)
+  nav.navbar.navbar-default
+    .container-fluid
+      .navbar-header
+        button.navbar-toggle.collapsed(role="button" data-toggle="collapse" data-target="#swarmadmin-nav" aria-expanded="false")
+          span.sr-only Toggle Navigation
+          span.icon-bar
+          span.icon-bar
+          span.icon-bar
+        a.navbar-brand(href=baseUrl)=brand
+      .collapse.navbar-collapse#swarmadmin-nav
+        ul.nav.navbar-nav
+          each module in modules
+            li: a(href=baseUrl + '/' + _.pluralize(module.toLowerCase(), 2) class=active === _.pluralize(module.toLowerCase(), 2) ? 'active' : '')=module
+        if user
+          ul.nav.navbar-nav.navbar-right
+            li: p.navbar-text Logged in as #{user.email || user.name || user.username || user.userName}
+            if logoutLink
+              a.btn.btn-info.navbar-btn(href=logoutLink) Logout
+      

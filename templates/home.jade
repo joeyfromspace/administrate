@@ -1,0 +1,10 @@
+extends ./layout
+
+block content
+  .container
+    .row: .col-xs-12: h1=title
+    if models.length
+      .row: .col-xs-12: h2 Modules
+      .row
+        each model in models
+          .col-xs-6.col-md-3: a.btn.btn-default.btn-block.btn-lg(href=baseUrl + '/' + _.pluralize(model.toLowerCase(), 2))=model
