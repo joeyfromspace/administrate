@@ -30,7 +30,7 @@ const Administrate  = (function() {
           this.options = context.getOptions();
           router.all('*', this.options.authMiddlewareFn);
           router.all('*', express.static(path.join(__dirname, 'assets')));
-          router.all('*', _private.setupRequest);
+          router.all('*', _private.setLocals);
           router.get('/', _private.routes.home);
           router.param('model', _private.getModel);
           router.param('id', _private.getDoc);
@@ -63,41 +63,85 @@ const Administrate  = (function() {
           },
           detail: function(req, res) {
             res.locals.inputs = {};
-            async.forEachOf(req.admin.Model.schema.paths, (path, name, done) => {
-              let type;
+            function parseSchema(callback) {
+              async.forEachOf(req.admin.Model.schema.paths, (path, name, done) => {
+                let type, ref;
 
-              if (_private.options.pathBlacklist.indexOf(name) >= 0) {
-                return done();
-              }
-              switch (path.options.type.schemaName) {
-                case 'String':
-                  type = 'text';
+                if (_private.options.pathBlacklist.indexOf(name) >= 0) {
+                  return done();
+                }
+                switch (path.options.type.schemaName) {
+                  case 'String':
+                    type = 'text';
+                    break;
+                  case 'Number':
+                    type = 'number';
+                    break;
+                  case 'Boolean':
+                    type = 'checkbox';
+                    break;
+                  case 'ObjectId':
+                    if (path.options.hasOwnProperty('ref')) {
+                      type = 'relationship';
+                      ref = path.options.ref.toLowerCase();
+                    }
                   break;
-                case 'Number':
-                  type = 'number';
+                  case undefined:
+                    if (path.instance === 'Date') {
+                      type = 'date';
+                    }
                   break;
-                case 'Boolean':
-                  type = 'checkbox';
-                  break;
-                case 'ObjectId':
-                  console.log(path);
-                break;
-                case undefined:
-                  if (path.instance === 'Date') {
-                    type = 'date';
+
+                  default:
+                    break;
+                }
+                if (!type) {
+                  return done();
+                }
+
+                res.locals.inputs[name] = { type: type, label: name,  name: name };
+                if (ref) {
+                  res.locals.inputs[name].ref = ref;
+                }
+                done();
+              }, callback);
+            }
+
+            function populateRelationships(callback) {
+              let relationships;
+
+              relationships = _.pick(res.locals.inputs, (value) => {
+                return value.type === 'relationship';
+              });
+
+              async.forEachOf(relationships, (rel, key, done) => {
+                let Model = _private.models[rel.ref];
+
+                if (res.locals.model === {}) {
+                  res.locals.model[key] = {};
+                  return done();
+                }
+
+                Model.findById(res.locals.model[key]).exec((err, doc) => {
+                  res.locals.model[key] = doc || {};
+                  if (Model.schema.paths.hasOwnProperty('name')) {
+                    rel.displayField = 'name';
+                  } else if (Model.schema.paths.hasOwnProperty('title')) {
+                    rel.displayField = 'title';
+                  } else if (Model.schema.paths.hasOwnProperty('label')) {
+                    rel.displayField = 'label';
+                  } else {
+                    rel.displayField = 'search';
                   }
-                break;
 
-                default:
-                  break;
-              }
-              if (!type) {
-                return done();
-              }
+                  res.locals.inputs[key] = rel;
 
-              res.locals.inputs[name] = { type: type, label: name,  name: name };
-              done();
-            }, () => {
+                  return done(err);
+                });
+              }, callback);
+            }
+
+            async.series([parseSchema, populateRelationships], () => {
               res.locals.active = pluralize(req.admin.Model.modelName, 2);
               res.send(_private.render('detail', res.locals));
             });
@@ -112,36 +156,17 @@ const Administrate  = (function() {
             res.send(_private.render('home', res.locals));
           },
           index: function(req, res, next) {
-            const getData = function(done) {
-              let query = req.params.query || null;
-              req.admin.Model.find(query).exec((err, results) => {
-                if (err) {
-                  return next(err);
-                }
-
-                res.locals.collection =_.map(results, (result) => {
-                  return  _.mapObject(_.pick(result, function(value, key) {
-                    return _private.options.customListColumns.hasOwnProperty(req.admin.Model.modelName.toLowerCase()) ? _private.options.customListColumns[req.admin.Model.modelName.toLowerCase()].indexOf(key) >= 0 : (key.charAt(0) !== '_' && key.charAt(0) !== '$' && typeof value !== 'function' && _private.options.pathBlacklist.indexOf(key) === -1);
-                  }), (value, key) => {
-                    console.log(key + ' isDate: ' + _.isDate(value));
-                    if (_.isDate(value)) {
-                      return moment(value).calendar();
-                    }
-                    return value;
-                  });
-                });
-                return done();
-              });
-            };
-
-            async.parallel([getData], (err) => {
+            _private.getData(req.admin.Model, {}, { populateRelationships: true }, (err, collection) => {
               if (err) {
                 return next(err);
               }
 
+
+              res.locals.collection = collection;
               res.locals.sortOrder = _private.options.customListColumns.hasOwnProperty(req.admin.Model.modelName.toLowerCase()) ? _private.options.customListColumns[req.admin.Model.modelName.toLowerCase()] : false;
               res.locals.active = pluralize(req.admin.Model.modelName, 2);
               res.locals.title = pluralize(req.admin.Model.modelName);
+
               res.send(_private.render('list', res.locals));
             });
           },
@@ -176,10 +201,105 @@ const Administrate  = (function() {
             });
           }
         },
+        getData: function(Model, query, options, done) {
+          let baseQuery;
+          let asyncOp = [];
+
+          const populateRelationships = (callback) => {
+            let populations = [];
+            async.forEachOf(Model.schema.paths, (path, name, cb) => {
+              if (typeof path.options.type.schemaName === 'undefined' || path.options.type.schemaName !== 'ObjectId' || path.options.hasOwnProperty('ref') === false) {
+                return cb();
+              }
+
+              populations.push(name);
+              return cb();
+            }, () => {
+              baseQuery = baseQuery.populate(populations);
+              callback();
+            });
+          };
+
+          const applyLimit  = (callback) => {
+            baseQuery.limit(options.limit);
+            callback();
+          };
+
+          const applySort = (callback) => {
+            baseQuery.sort(options.sort);
+            callback();
+          };
+
+          if (typeof query === 'function' && typeof options === 'undefined') {
+            done = query;
+            query = {};
+            options = {};
+          } else if (typeof options === 'function' && typeof done === 'undefined') {
+            done = options;
+            options = {};
+          }
+
+          _.defaults(options, {
+            populateRelationships: false,
+            limit: undefined,
+            sort: undefined
+          });
+
+          baseQuery = Model.find(query);
+
+          if (options.populateRelationships) {
+            asyncOp.push(populateRelationships);
+          }
+
+          if (options.limit && typeof options.limit === 'number') {
+            asyncOp.push(applyLimit);
+          }
+
+          if (options.sort && (typeof options.sort === 'string' || typeof options.sort === 'object')) {
+            asyncOp.push(applySort);
+          }
+
+          async.series(asyncOp, () => {
+            baseQuery.exec((err, results) => {
+              let collection;
+              if (err) {
+                return done(err);
+              }
+
+              collection =_.map(results, (result) => {
+                return  _.mapObject(_.pick(result, function(value, key) {
+                  return _private.options.customListColumns.hasOwnProperty(Model.modelName.toLowerCase()) ? _private.options.customListColumns[Model.modelName.toLowerCase()].indexOf(key) >= 0 : (key.charAt(0) !== '_' && key.charAt(0) !== '$' && typeof value !== 'function' && _private.options.pathBlacklist.indexOf(key) === -1);
+                }), (value) => {
+                  if (_.isDate(value)) {
+                    return moment(value).calendar();
+                  }
+                  return value;
+                });
+              });
+              return done(null, collection);
+            });
+          });
+        },
         getDoc: function(req, res, next, id) {
+          let query = {};
           if (!id || id === 'new') {
             res.locals.model = {};
             return next();
+          }
+          if (id === 'search') {
+            if (req.query) {
+              _.each(req.query, (value, key) => {
+                let regex = new RegExp(value, 'i');
+                query[key] = { $in: [ regex ]};
+              });
+            }
+            return _private.getData(req.admin.Model, query, (err, collection) => {
+              if (err) {
+                return next(err);
+              }
+
+              return res.json(collection);
+            });
           }
           req.admin.Model.findById(id).exec((err, result) => {
             if (err) {
@@ -226,7 +346,7 @@ const Administrate  = (function() {
         render: function(view, locals) {
           return jade.renderFile(path.join(this.options.viewsPath, view + '.jade'), locals);
         },
-        setupRequest: function(req, res, next) {
+        setLocals: function(req, res, next) {
           res.locals._ = {
             _: _,
             moment: moment,

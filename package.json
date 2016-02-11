@@ -3,7 +3,7 @@
   "description": "Middleware that provides an admin backend site for Express 4.x and Mongoose models",
   "license": "MIT",
   "author": "Joey Lappin (SWARM)",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "engines": {
     "node": "5.0.0"
   },

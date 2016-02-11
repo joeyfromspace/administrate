@@ -23,6 +23,12 @@ mixin form-input(input, model)
                 input.form-control.disabled(type="text" name=input.name disabled value=model[input.name])
               default
                 input.form-control(type="text" value=model[input.name] name=input.name)
+      when 'relationship'
+        .form-group
+          label.col-xs-12.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
+          div.col-md-10
+            input.form-control.selectbox(data-url=_.pluralize(input.ref, 2) data-name=input.ref data-label=input.displayField value=model[input.ref][input.displayField])
+          
                           
 mixin header(brand, user, baseUrl, modules, active, logoutLink)
   nav.navbar.navbar-default

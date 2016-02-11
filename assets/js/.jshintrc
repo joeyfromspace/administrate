@@ -86,5 +86,5 @@
     "yui"           : false,    // Yahoo User Interface
 
     // Custom Globals
-    "globals"       : {"ADMIN_LOCALS": true, "$": true, "_": true}        // additional predefined global variables
+    "globals"       : {"ADMIN_LOCALS": true, "$": true, "_": true, "adminDetailSelector": true}        // additional predefined global variables
 }

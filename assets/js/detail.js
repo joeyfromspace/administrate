@@ -4,6 +4,7 @@
   const UPDATE_COOLDOWN = 5000;
   let buttons;
   let inputs;
+  let selectizes;
   let controller = {
     flags: {
       busy: false
@@ -165,6 +166,14 @@
          _.debounce(() => {
            events.update(e);
          }, UPDATE_COOLDOWN);
+       });
+     });
+     selectizes = adminDetailSelector('.selectbox');
+     selectizes.forEach((sel) => {
+       sel.on('change', (e) => {
+         console.log('selectize changed');
+         console.log(e);
+         controller.updateModel($(e.target).attr('data-name'), e.target.value);
        });
      });
   });

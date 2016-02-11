@@ -20,4 +20,5 @@ block scripts
     window.ADMIN_LOCALS.model = !{JSON.stringify(model)};
     window.ADMIN_LOCALS.modelName = "#{title.toLowerCase()}";
     window.ADMIN_LOCALS.modelNamePlural = "#{_.pluralize(title.toLowerCase(), 2)}";
+  script(src=baseUrl + '/js/admin-selectize.js')
   script(src=baseUrl + '/js/detail.js')

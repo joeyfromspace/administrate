@@ -1,5 +1,31 @@
 extends ./layout
 
+mixin populate(doc)
+  -var subdoc;
+  tr
+    td: a(href=baseUrl + '/' + title.toLowerCase() + '/' + doc.id)=doc.id
+    if sortOrder
+      each key in sortOrder
+        if key !== 'id'
+          if typeof doc[key] !== 'object'
+            td=doc[key]
+          else
+            if doc[key]._id
+              -subdoc = doc[key];
+              td: a(href=baseUrl + '/' + _.pluralize(key, 2) + '/' + subdoc._id.toString())=subdoc.name ? subdoc.name : (subdoc.title ? subdoc.title : (subdoc.label ? subdoc.label : subdoc._id.toString()))
+            else
+              td=doc[key]
+    else
+      each value, key in doc
+        if key !== 'id'
+          if typeof value !== 'object'
+            td=value
+          else
+            if value._id
+              td: a(href=baseUrl + '/' + _.pluralize(key, 2) + '/' + value._id.toString())=value.name ? value.name : (value.title ? value.title : (value.label ? value.label : value._id.toString()))
+            else
+              td=value
+
 block content
   .container
     .row: .col-xs-12: h1=title + ' List'
@@ -17,27 +43,9 @@ block content
                 each value, key in member
                   if key !== 'id'
                     th=_.toProperCase(key)
-            tr
-              td: a(href=baseUrl + '/' + title.toLowerCase() + '/' + member.id)=member.id
-              if sortOrder
-                each key in sortOrder
-                  if key !== 'id'
-                    td=member[key]
-              else
-                each value, key in member
-                  if key !== 'id'
-                    td=value
+            +populate(member)
           else
-            tr
-              td: a(href=baseUrl + '/' + title.toLowerCase() + '/' + member.id)=member.id
-              if sortOrder
-                each key in sortOrder
-                  if key !== 'id'
-                    td=member[key]
-              else
-                each value, key in member
-                  if key !== 'id'
-                    td=value
+            +populate(member)
     .row
       .col-md-2: a.btn.btn-info.btn-lg.btn-block(href=baseUrl + '/' + title.toLowerCase() + '/new') &plus; Add New
       .col-md-2: a.btn.btn-default.btn-lg.btn-block(href=baseUrl) Back
