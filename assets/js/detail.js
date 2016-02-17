@@ -22,7 +22,6 @@
       const handlers = {
         load: (e) => {
           let response = JSON.parse(e.currentTarget.responseText);
-          console.log(response);
           if (method === 'DELETE') {
             return location.assign(DEFAULT_REQUEST_PATH);
           }
@@ -81,7 +80,25 @@
       });
     },
     updateModel: (prop, value) => {
-      controller.model[prop] = value;
+      const findProp = function(model, props) {
+        let currentProp = props.shift();
+        if (!props.length) {
+          model[currentProp] = value;
+          return;
+        }
+
+        if (typeof model[currentProp] === 'undefined') {
+          model[currentProp] = {};
+        }
+
+        return findProp(model[currentProp], props);
+      };
+
+      if (prop.indexOf('.') >= 0) {
+        findProp(controller.model, prop.split('.'));
+      } else {
+        controller.model[prop] = value;
+      }
     }
   };
   const actions = {
@@ -118,13 +135,16 @@
       let value;
       let t = e.currentTarget;
       let tag = t.tagName.toLowerCase();
-      let type = t.tagName.toLowerCase();
+      let type = t.type.toLowerCase();
       switch (tag) {
        case 'input':
-         if (type === 'checkbox' || type === 'radio') {
+         if (type === 'checkbox') {
+           value = t.checked;
+         } else if (type === 'radio') {
            value = t.selected;
+         } else {
+           value = t.value;
          }
-         value = t.value;
          break;
 
        case 'textarea':
@@ -171,8 +191,6 @@
      selectizes = adminDetailSelector('.selectbox');
      selectizes.forEach((sel) => {
        sel.on('change', (e) => {
-         console.log('selectize changed');
-         console.log(e);
          controller.updateModel($(e.target).attr('data-name'), e.target.value);
        });
      });

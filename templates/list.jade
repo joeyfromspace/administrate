@@ -51,8 +51,9 @@ block content
       .col-md-2: a.btn.btn-default.btn-lg.btn-block(href=baseUrl) Back
   block scripts
     script.
-      const ADMIN_LOCALS = {
-        baseUrl: "#{baseUrl}",
-        modelName: "#{title}"
-      };
+      if (typeof ADMIN_LOCALS === 'undefined') {
+        window.ADMIN_LOCALS = {};
+      }
+      ADMIN_LOCALS.baseUrl = "#{baseUrl}";
+      ADMIN_LOCALS.modelName = "#{title}";
     script(src=baseUrl + '/js/list.js')

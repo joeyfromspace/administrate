@@ -1,16 +1,27 @@
 mixin form-input(input, model)
-  .row: .col-xs-12
+  -var shouldSplitInput = input.name.indexOf('.') >= 0;
+  -var value, splitInput, combinedInput;
+  //- Iterate through names to capture value of subdocs
+  if shouldSplitInput
+    -splitInput = input.name.split('.');
+    -combinedInput = model[splitInput.shift()];
+    each key in splitInput
+      -combinedInput = combinedInput[key];
+    -value = combinedInput
+  else
+     -value = model[input.name];
+  .row: .col-xs-12  
     case input.type
       when 'text'
         .form-group
           label.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
           .col-xs-12.col-md-10
-            input.form-control(type="text" name=input.name value=model[input.name])
+            input.form-control(type="text" name=input.name value=value)
       when 'checkbox'
         .form-group: .col-md-offset-2.col-md-10
           .checkbox
-            label
-              input(type="checkbox" name=input.name checked=model[input.name])
+            label              
+              input(type="checkbox" name=input.name checked=(value ? true : false))
               =_.toProperCase(input.label)
       when 'date'        
         .form-group
@@ -18,11 +29,11 @@ mixin form-input(input, model)
           .col-xs-12.col-md-10.text-left
             case input.name
               when 'createdAt'
-                input.form-control.disabled(type="text" name=input.name disabled value=model[input.name])
+                input.form-control.disabled(type="text" name=input.name disabled value=value)
               when 'updatedAt'
-                input.form-control.disabled(type="text" name=input.name disabled value=model[input.name])
+                input.form-control.disabled(type="text" name=input.name disabled value=value)
               default
-                input.form-control(type="text" value=model[input.name] name=input.name)
+                input.form-control(type="text" value=model[input.name] name=value)
       when 'relationship'
         .form-group
           label.col-xs-12.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)

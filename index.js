@@ -100,6 +100,7 @@ const Administrate  = (function() {
                 }
 
                 res.locals.inputs[name] = { type: type, label: name,  name: name };
+
                 if (ref) {
                   res.locals.inputs[name].ref = ref;
                 }

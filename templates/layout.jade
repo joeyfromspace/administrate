@@ -22,10 +22,11 @@ html
     block content
     block footer
     script.
-      window.ADMIN_LOCALS = {
-        baseUrl: "#{baseUrl}",
-        templates: {}
-      };    
+      if (typeof ADMIN_LOCALS === 'undefined') {
+        window.ADMIN_LOCALS = {};
+      }
+      ADMIN_LOCALS.baseUrl = "#{baseUrl}";
+      ADMIN_LOCALS.templates = {};
     script(src=baseUrl + '/js/jquery.js')
     script(src=baseUrl + '/js/bootstrap.js')
     script(src=baseUrl + '/js/underscore.js')
