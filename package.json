@@ -1,9 +1,11 @@
 {
   "name": "administrate",
   "description": "Middleware that provides an admin backend site for Express 4.x and Mongoose models",
+  "keywords": ["mongoose", "mongodb", "expressjs", "django", "express", "admin", "backend"],
+  "homepage": "https://github.com/joeyfromspace/administrate",
   "license": "MIT",
   "author": "Joey Lappin (SWARM)",
-  "version": "0.4.1",
+  "version": "0.5.1",
   "engines": {
     "node": "5.0.0"
   },
