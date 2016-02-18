@@ -1,27 +1,36 @@
 {
   "name": "administrate",
   "description": "Middleware that provides an admin backend site for Express 4.x and Mongoose models",
-  "keywords": ["mongoose", "mongodb", "expressjs", "django", "express", "admin", "backend"],
+  "keywords": [
+    "mongoose",
+    "mongodb",
+    "expressjs",
+    "django",
+    "express",
+    "admin",
+    "backend"
+  ],
   "homepage": "https://github.com/joeyfromspace/administrate",
   "license": "MIT",
   "author": "Joey Lappin (SWARM)",
-  "version": "0.5.1",
+  "version": "0.5.5",
   "engines": {
     "node": "5.0.0"
   },
   "scripts": {
     "test": "mocha test/ --delay"
   },
-  "respository": {
+  "repository": {
     "type": "git",
     "url": "https://github.com/joeyfromspace/administrate.git"
   },
   "dependencies": {
     "async": "1.5.2",
+    "bson": "0.4.21",
     "jade": "1.11.0",
     "moment": "2.11.2",
-    "pluralize": "1.2.1",
     "mongoose": "4.3.6",
+    "pluralize": "1.2.1",
     "underscore": "1.8.3"
   },
   "devDependencies": {

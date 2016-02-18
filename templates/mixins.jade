@@ -12,6 +12,11 @@ mixin form-input(input, model)
      -value = model[input.name];
   .row: .col-xs-12  
     case input.type
+      when 'textarea'
+        .form-group
+          label.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
+          .col-xs-12.col-md-10
+            textarea.form-control(rows="8")=value
       when 'text'
         .form-group
           label.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
@@ -38,7 +43,7 @@ mixin form-input(input, model)
         .form-group
           label.col-xs-12.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
           div.col-md-10
-            input.form-control.selectbox(data-url=_.pluralize(input.ref, 2) data-name=input.ref data-label=input.displayField value=model[input.ref][input.displayField])
+            input.form-control.selectbox(data-url=_.pluralize(input.ref, 2) data-name=input.ref data-label=input.displayField value=model[input.ref] ? model[input.ref][input.displayField] : '')
           
                           
 mixin header(brand, user, baseUrl, modules, active, logoutLink)

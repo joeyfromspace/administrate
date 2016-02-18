@@ -19,6 +19,7 @@
  const path       =     require('path');
  const fs         =     require('fs');
  const moment     =     require('moment');
+ const mongoose   =     require('mongoose');
  /* End Dependencies */
 
 const Administrate  = (function() {
@@ -72,7 +73,7 @@ const Administrate  = (function() {
                 }
                 switch (path.options.type.schemaName) {
                   case 'String':
-                    type = 'text';
+                    type = path.options.extended ? 'textarea' : 'text';
                     break;
                   case 'Number':
                     type = 'number';
@@ -123,16 +124,18 @@ const Administrate  = (function() {
                   return done();
                 }
 
+
                 Model.findById(res.locals.model[key]).exec((err, doc) => {
-                  res.locals.model[key] = doc || {};
-                  if (Model.schema.paths.hasOwnProperty('name')) {
+                  res.locals.model[key] = doc ? doc : {};
+
+                  if (Model.schema.paths.name) {
                     rel.displayField = 'name';
-                  } else if (Model.schema.paths.hasOwnProperty('title')) {
+                  } else if (Model.schema.paths.title) {
                     rel.displayField = 'title';
-                  } else if (Model.schema.paths.hasOwnProperty('label')) {
+                  } else if (Model.schema.paths.label) {
                     rel.displayField = 'label';
                   } else {
-                    rel.displayField = 'search';
+                    rel.displayField = '_id';
                   }
 
                   res.locals.inputs[key] = rel;
@@ -323,6 +326,14 @@ const Administrate  = (function() {
             callback = ()=>{};
           }
 
+          if ((Array.isArray(this.options.models) && this.options.models.length > 0) || (Object.keys(this.options.models).length > 0)) {
+            _.each(this.options.models, function(model, key) {
+              _private.models[key.toLowerCase()] = model;
+              modelNames.push(model.schema.modelName);
+            });
+            return callback(null, modelNames);
+          }
+
           fs.readdir(this.options.modelsPath, (err, files) => {
             if (err) {
               return callback(err);
@@ -335,7 +346,12 @@ const Administrate  = (function() {
                 return done();
               }
 
-              model = require(path.join(this.options.modelsPath, file));
+              if (mongoose.models[path.basename(file, '.js')]) {
+                model = mongoose.model(path.basename(file, '.js'));
+              } else {
+                model = require(path.join(this.options.modelsPath, file));
+              }
+
               _private.models[model.modelName.toLowerCase()] = model;
               modelNames.push(model.schema.modelName);
               return done();
@@ -372,6 +388,7 @@ const Administrate  = (function() {
       const defaults = {
         modelsPath: CONFIG.MODELS_PATH,
         viewsPath:  CONFIG.VIEWS_PATH,
+        models: {},
         pathBlacklist: CONFIG.PATH_BLACKLIST,
         appName: 'Adminstrate',
         logoutLink: undefined,
