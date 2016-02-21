@@ -47,7 +47,16 @@ const customListColumns = {
 `string: viewsPath`: A custom path to JADE templates to render for admin. This is if you want to overwrite the default templates with your own. However, keep in mind that you will need to properly populate the local variables for templates to work. Changing this value is not recommended without first studying the built-in templates in /templates.
 
 ##Schema modifiers
+Administrate supports a few options that affect how Schema paths are displayed and edited in the admin. Slip these into the schema path options and they will automatically be applied in the admin.
+
+###Textarea Support
 Add `extended: true` to your `String` schema paths to display a textarea in the admin interface instead of a single text input. Useful for editing blog posts and other larger bodies of text.
+
+###Hidden Paths
+Add `hidden: true` to any Schema path to hide it from being displayed in the admin.
+
+###Read-only Paths
+Add `edit: false` to any Schema path to have a path disabled on the front-end.
 
 ##TODO
 Tests. They don't exist.

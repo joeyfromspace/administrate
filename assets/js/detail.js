@@ -5,6 +5,7 @@
   let buttons;
   let inputs;
   let selectizes;
+  let datepickers;
   let controller = {
     flags: {
       busy: false
@@ -143,7 +144,7 @@
          } else if (type === 'radio') {
            value = t.selected;
          } else {
-           value = t.value;
+          value = t.value;
          }
          break;
 
@@ -178,6 +179,9 @@
        });
      });
      Array.prototype.forEach.call(inputs, (input) => {
+       if (input.dataset.provide === 'datepicker') {
+         return;
+       }
        input.addEventListener('change', (e) => {
          e.preventDefault();
          events.update(e);
@@ -187,6 +191,10 @@
            events.update(e);
          }, UPDATE_COOLDOWN);
        });
+     });
+     datepickers = document.querySelectorAll('input[data-provide="datepicker"]');
+     $(datepickers).datepicker().on('hide', function(e) {
+       controller.updateModel(e.target.name, new Date(e.target.value));
      });
      selectizes = adminDetailSelector('.selectbox');
      selectizes.forEach((sel) => {

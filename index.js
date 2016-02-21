@@ -68,9 +68,10 @@ const Administrate  = (function() {
               async.forEachOf(req.admin.Model.schema.paths, (path, name, done) => {
                 let type, ref;
 
-                if (_private.options.pathBlacklist.indexOf(name) >= 0) {
+                if (path.options.hidden || _private.options.pathBlacklist.indexOf(name) >= 0) {
                   return done();
                 }
+
                 switch (path.options.type.schemaName) {
                   case 'String':
                     type = path.options.extended ? 'textarea' : 'text';
@@ -87,20 +88,23 @@ const Administrate  = (function() {
                       ref = path.options.ref.toLowerCase();
                     }
                   break;
-                  case undefined:
+
+                  default:
                     if (path.instance === 'Date') {
                       type = 'date';
                     }
-                  break;
 
-                  default:
+                    if (path.instance === 'Boolean') {
+                      type = 'checkbox';
+                    }
+                    
                     break;
                 }
                 if (!type) {
                   return done();
                 }
 
-                res.locals.inputs[name] = { type: type, label: name,  name: name };
+                res.locals.inputs[name] = { type: type, label: name,  name: name, edit:  path.options.edit && path.options.edit === false ? false : true };
 
                 if (ref) {
                   res.locals.inputs[name].ref = ref;

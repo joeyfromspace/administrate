@@ -16,34 +16,28 @@ mixin form-input(input, model)
         .form-group
           label.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
           .col-xs-12.col-md-10
-            textarea.form-control(rows="8")=value
+            textarea.form-control(rows="8" disabled=!input.edit)=value
       when 'text'
         .form-group
           label.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
           .col-xs-12.col-md-10
-            input.form-control(type="text" name=input.name value=value)
+            input.form-control(type="text" name=input.name value=value disabled=!input.edit)
       when 'checkbox'
         .form-group: .col-md-offset-2.col-md-10
           .checkbox
             label              
-              input(type="checkbox" name=input.name checked=(value ? true : false))
+              input(type="checkbox" name=input.name checked=(value ? true : false) disabled=!input.edit)
               =_.toProperCase(input.label)
       when 'date'        
         .form-group
           label.col-xs-12.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
           .col-xs-12.col-md-10.text-left
-            case input.name
-              when 'createdAt'
-                input.form-control.disabled(type="text" name=input.name disabled value=value)
-              when 'updatedAt'
-                input.form-control.disabled(type="text" name=input.name disabled value=value)
-              default
-                input.form-control(type="text" value=model[input.name] name=value)
+            input.form-control(type="text" name=input.name data-provide="datepicker" data-date-format="MM dd, yyyy" disabled=!input.edit value=value ? _.moment(value).format('MMMM DD, YYYY') : '')
       when 'relationship'
         .form-group
           label.col-xs-12.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
           div.col-md-10
-            input.form-control.selectbox(data-url=_.pluralize(input.ref, 2) data-name=input.ref data-label=input.displayField value=model[input.ref] ? model[input.ref][input.displayField] : '')
+            input.form-control.selectbox(data-url=_.pluralize(input.ref, 2) disabled=!input.edit data-name=input.ref data-label=input.displayField value=model[input.ref] ? model[input.ref][input.displayField] : '')
           
                           
 mixin header(brand, user, baseUrl, modules, active, logoutLink)
