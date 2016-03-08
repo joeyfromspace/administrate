@@ -31,8 +31,23 @@ class Router {
   resolve() {
     let location = window.location.pathname;
 
-    let routes = _.filter(this.routes, (r) => {
-      return r.path === location || r.path === '*';
+    // Iterate through routes for matches to the path, removing entries with duplicate controllers
+    let routes = _.uniq(_.filter(this.routes, (r) => {
+      if (r.path === '*') {
+        return true;
+      }
+      let pathArray = r.path.split('/');
+      let pathQuery = _.map(pathArray, (p) => {
+        if (p.charAt(0) === ':') {
+          return '(?:.+)';
+        }
+        return p;
+      });
+      let regexpQuery = new RegExp(pathQuery.join('/'), 'i');
+
+      return regexpQuery.test(location);
+    }), (r) => {
+      return r.Controller;
     });
 
     if (!routes.length) {
