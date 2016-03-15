@@ -30,11 +30,14 @@ block content
   .container
     .row: .col-xs-12: h1=title + ' List'
     .row: .col-xs-12
+      +filters(sortOrder ? sortOrder : Object.keys(collection[0]), collection[0])
+    .row: .col-xs-12
       table.table
         each member, index in collection
           if index === 0
             tr
               th='id'
+                span.glyphicon.glyphicon-sort
               if sortOrder
                 each key in sortOrder
                   if key !== 'id'
@@ -43,6 +46,7 @@ block content
                 each value, key in member
                   if key !== 'id'
                     th=_.toProperCase(key)
+                      span.glyphicon.glyphicon-sort
             +populate(member)
           else
             +populate(member)

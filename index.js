@@ -45,6 +45,61 @@ const Administrate  = (function() {
           _private.getModelsList();
           return router;
         },
+        parseSchema: function(schema, callback) {
+          let inputs = {};
+          async.forEachOf(schema.paths, (path, name, done) => {
+            let type, ref;
+
+            if (path.options.hidden || _private.options.pathBlacklist.indexOf(name) >= 0) {
+              return done();
+            }
+
+            switch (path.options.type.schemaName) {
+              case 'String':
+                type = path.options.extended ? 'textarea' : 'text';
+                break;
+              case 'Number':
+                type = 'number';
+                break;
+              case 'Boolean':
+                type = 'checkbox';
+                break;
+              case 'ObjectId':
+                if (path.options.hasOwnProperty('ref')) {
+                  type = 'relationship';
+                  ref = path.options.ref.toLowerCase();
+                }
+              break;
+
+              default:
+                if (path.instance === 'Date') {
+                  type = 'date';
+                }
+
+                if (path.instance === 'Boolean') {
+                  type = 'checkbox';
+                }
+
+                break;
+            }
+            if (!type) {
+              return done();
+            }
+
+            inputs[name] = { type: type, label: name,  name: name, edit:  path.options.edit && path.options.edit === false ? false : true };
+
+            if (ref) {
+              inputs[name].ref = ref;
+            }
+            done();
+          }, (err) => {
+            if (err) {
+              return callback(err);
+            }
+
+            return callback(null, inputs);
+          });
+        },
         routes: {
           create: function(req, res, next) {
             let data = req.body;
@@ -64,53 +119,14 @@ const Administrate  = (function() {
           },
           detail: function(req, res) {
             res.locals.inputs = {};
-            function parseSchema(callback) {
-              async.forEachOf(req.admin.Model.schema.paths, (path, name, done) => {
-                let type, ref;
-
-                if (path.options.hidden || _private.options.pathBlacklist.indexOf(name) >= 0) {
-                  return done();
+            function buildInputs(callback) {
+              _private.parseSchema(req.admin.Model.schema, (err, inputs) => {
+                if (err) {
+                  return callback(err);
                 }
-
-                switch (path.options.type.schemaName) {
-                  case 'String':
-                    type = path.options.extended ? 'textarea' : 'text';
-                    break;
-                  case 'Number':
-                    type = 'number';
-                    break;
-                  case 'Boolean':
-                    type = 'checkbox';
-                    break;
-                  case 'ObjectId':
-                    if (path.options.hasOwnProperty('ref')) {
-                      type = 'relationship';
-                      ref = path.options.ref.toLowerCase();
-                    }
-                  break;
-
-                  default:
-                    if (path.instance === 'Date') {
-                      type = 'date';
-                    }
-
-                    if (path.instance === 'Boolean') {
-                      type = 'checkbox';
-                    }
-                    
-                    break;
-                }
-                if (!type) {
-                  return done();
-                }
-
-                res.locals.inputs[name] = { type: type, label: name,  name: name, edit:  path.options.edit && path.options.edit === false ? false : true };
-
-                if (ref) {
-                  res.locals.inputs[name].ref = ref;
-                }
-                done();
-              }, callback);
+                res.locals.inputs = inputs;
+                return callback();
+              });
             }
 
             function populateRelationships(callback) {
@@ -149,7 +165,7 @@ const Administrate  = (function() {
               }, callback);
             }
 
-            async.series([parseSchema, populateRelationships], () => {
+            async.series([buildInputs, populateRelationships], () => {
               res.locals.active = pluralize(req.admin.Model.modelName, 2);
               res.send(_private.render('detail', res.locals));
             });
@@ -169,13 +185,15 @@ const Administrate  = (function() {
                 return next(err);
               }
 
+              _private.parseSchema(req.admin.Model.schema, (err, inputs) => {
+                res.locals.inputs = inputs;
+                res.locals.collection = collection;
+                res.locals.sortOrder = _private.options.customListColumns.hasOwnProperty(req.admin.Model.modelName.toLowerCase()) ? _private.options.customListColumns[req.admin.Model.modelName.toLowerCase()] : false;
+                res.locals.active = pluralize(req.admin.Model.modelName, 2);
+                res.locals.title = pluralize(req.admin.Model.modelName);
 
-              res.locals.collection = collection;
-              res.locals.sortOrder = _private.options.customListColumns.hasOwnProperty(req.admin.Model.modelName.toLowerCase()) ? _private.options.customListColumns[req.admin.Model.modelName.toLowerCase()] : false;
-              res.locals.active = pluralize(req.admin.Model.modelName, 2);
-              res.locals.title = pluralize(req.admin.Model.modelName);
-
-              res.send(_private.render('list', res.locals));
+                res.send(_private.render('list', res.locals));
+              });
             });
           },
           remove: function(req, res, next) {

@@ -38,7 +38,26 @@ mixin form-input(input, model)
           label.col-xs-12.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
           div.col-md-10
             input.form-control.selectbox(data-url=_.pluralize(input.ref, 2) disabled=!input.edit data-name=input.ref data-label=input.displayField value=model[input.ref] ? model[input.ref][input.displayField] : '')
-          
+
+mixin filters(inputs)
+  .container: .row: .col-xs-12.col-md-6.center-block
+    p.lead Filters
+    each input in inputs
+      if input.edit
+        .col-xs-6.col-sm-4
+          case input.type
+            when 'text'
+              .form-group
+                label.control-label(for=input.name + '-filter')=_.toProperCase(input.label)
+                input.form-control(type="text" name=input.name + '-filter')
+            when 'textarea'
+              .form-group
+                label.control-label(for=input.name + '-filter')=_.toProperCase(input.label)
+                input.form-control(type="text" name=input.name + '-filter')
+            when 'checkbox'
+              .form-group: .checkbox
+                label: input(type="checkbox" name=input.name + '-filter' checked=true) _.toProperCase(input.label)           
+            
                           
 mixin header(brand, user, baseUrl, modules, active, logoutLink)
   nav.navbar.navbar-default
