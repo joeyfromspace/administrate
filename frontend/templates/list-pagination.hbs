@@ -1,0 +1,7 @@
+<ul class="pagination">
+    <li class="{{#ifeq currentPage 1}}disabled{{/ifeq}}" {{#ifeq currentPage 1}}disabled{{/ifeq}}><a href="#">&larr;</a></li>
+    {{#each pages}}
+        <li class="{{#ifeq ../currentPage this}}active{{/ifeq}}"><a href="#" >{{this}}</a></li>
+    {{/each}}
+    <li class="{{#ifeq currentPage totalPages}}disabled{{/ifeq}}" {{#ifeq currentPage totalPages}}disabled{{/ifeq}}><a href="#">&rarr;</a></li>
+</ul>

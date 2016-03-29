@@ -6,15 +6,21 @@ const buffer 						= require('vinyl-buffer');
 const browserify				= require('browserify');
 const watchify					= require('watchify');
 const babelify					= require('babelify');
+const brfs              = require('brfs');
 
 const paths = {
-  src: './src',
+  src: './frontend',
   entryPoint: 'app.js',
-  dest: 'build/js'
+  dest: 'assets/js'
 };
 
 const compile = function(watch) {
-  const bundler = watchify(browserify(paths.src + '/' + paths.entryPoint, { debug: true }).transform(babelify));
+  let br = browserify('./frontend/app.js', { debug: true });
+  let bundler;
+
+  br.transform(babelify);
+  br.transform(brfs);
+  bundler = watchify(br);
 
   function rebundle() {
     bundler.bundle()

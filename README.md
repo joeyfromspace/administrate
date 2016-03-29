@@ -60,3 +60,7 @@ Add `edit: false` to any Schema path to have a path disabled on the front-end.
 
 ##TODO
 Tests. They don't exist.
+
+##Changelog
+
+**03-29-2016**: Updated list view with pagination and sorting.

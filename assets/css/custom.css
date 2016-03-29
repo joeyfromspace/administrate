@@ -3,3 +3,7 @@
   z-index: 5000;
   width:100%;
 }
+
+#results-table thead th {
+  cursor: pointer;
+}

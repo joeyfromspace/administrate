@@ -56,7 +56,9 @@ mixin filters(inputs)
                 input.form-control(type="text" name=input.name + '-filter')
             when 'checkbox'
               .form-group: .checkbox
-                label: input(type="checkbox" name=input.name + '-filter' checked=true) _.toProperCase(input.label)           
+                label 
+                  input(type="checkbox" name=input.name + '-filter' checked=true) 
+                  =_.toProperCase(input.label)           
             
                           
 mixin header(brand, user, baseUrl, modules, active, logoutLink)

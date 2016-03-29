@@ -2,6 +2,7 @@ extends ./layout
 
 mixin populate(doc)
   -var subdoc;
+  -var shouldSplitValue;
   tr
     td: a(href=baseUrl + '/' + title.toLowerCase() + '/' + doc.id)=doc.id
     if sortOrder
@@ -16,40 +17,41 @@ mixin populate(doc)
             else
               td=doc[key]
     else
-      each value, key in doc
+      each value, key in inputs
         if key !== 'id'
-          if typeof value !== 'object'
-            td=value
+          if typeof doc[key] !== 'object'
+            td=doc[key]
           else
-            if value._id
-              td: a(href=baseUrl + '/' + _.pluralize(key, 2) + '/' + value._id.toString())=value.name ? value.name : (value.title ? value.title : (value.label ? value.label : value._id.toString()))
+            if doc[key]._id
+              td: a(href=baseUrl + '/' + _.pluralize(key, 2) + '/' + doc[key]._id.toString())=doc[key].name ? doc[key].name : (doc[key].title ? doc[key].title : (doc[key].label ? doc[key].label : doc[key]._id.toString()))
             else
-              td=value
+              td=doc[key]
 
 block content
   .container
     .row: .col-xs-12: h1=title + ' List'
+    //-
+      .row: .col-xs-12
+        +filters(inputs)
     .row: .col-xs-12
-      +filters(sortOrder ? sortOrder : Object.keys(collection[0]), collection[0])
-    .row: .col-xs-12
-      table.table
-        each member, index in collection
-          if index === 0
-            tr
-              th='id'
-                span.glyphicon.glyphicon-sort
-              if sortOrder
-                each key in sortOrder
-                  if key !== 'id'
-                    th=_.toProperCase(key)
-              else
-                each value, key in member
-                  if key !== 'id'
-                    th=_.toProperCase(key)
-                      span.glyphicon.glyphicon-sort
-            +populate(member)
+      table.table#results-table
+        thead: tr
+          th(data-key='_id')='id '
+            span.glyphicon.glyphicon-sort
+          if sortOrder
+            each key in sortOrder
+              if key !== 'id'
+                th(data-key=key)=_.toProperCase(key) + ' '
+                  span.glyphicon.glyphicon-sort
           else
-            +populate(member)
+            each value, key in inputs
+              if key !== 'id'
+                th(data-key=key)=_.toProperCase(key) + ' '
+                  span.glyphicon.glyphicon-sort
+        tbody
+          if collection
+            each member, index in collection
+              +populate(member)
     .row
       .col-md-2: a.btn.btn-info.btn-lg.btn-block(href=baseUrl + '/' + title.toLowerCase() + '/new') &plus; Add New
       .col-md-2: a.btn.btn-default.btn-lg.btn-block(href=baseUrl) Back
@@ -60,4 +62,5 @@ block content
       }
       ADMIN_LOCALS.baseUrl = "#{baseUrl}";
       ADMIN_LOCALS.modelName = "#{title}";
-    script(src=baseUrl + '/js/list.js')
+      ADMIN_LOCALS.totalPages = parseInt("#{count}", 10);
+      ADMIN_LOCALS.totalPages = parseInt("#{totalPages}", 10);

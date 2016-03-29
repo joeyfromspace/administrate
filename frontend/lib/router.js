@@ -43,7 +43,7 @@ class Router {
         }
         return p;
       });
-      let regexpQuery = new RegExp(pathQuery.join('/'), 'i');
+      let regexpQuery = new RegExp('^' + pathQuery.join('/') + '$', 'i');
 
       return regexpQuery.test(location);
     }), (r) => {

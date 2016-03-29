@@ -187,7 +187,9 @@ const Administrate  = (function() {
 
               _private.parseSchema(req.admin.Model.schema, (err, inputs) => {
                 res.locals.inputs = inputs;
-                res.locals.collection = collection;
+                res.locals.collection = collection.data;
+                res.locals.count = collection.count;
+                res.locals.totalPages = collection.totalPages;
                 res.locals.sortOrder = _private.options.customListColumns.hasOwnProperty(req.admin.Model.modelName.toLowerCase()) ? _private.options.customListColumns[req.admin.Model.modelName.toLowerCase()] : false;
                 res.locals.active = pluralize(req.admin.Model.modelName, 2);
                 res.locals.title = pluralize(req.admin.Model.modelName);
@@ -229,6 +231,8 @@ const Administrate  = (function() {
         },
         getData: function(Model, query, options, done) {
           let baseQuery;
+          let countQuery;
+          let countResult;
           let asyncOp = [];
 
           const populateRelationships = (callback) => {
@@ -246,13 +250,28 @@ const Administrate  = (function() {
             });
           };
 
+          const applyCount = (callback) => {
+            countQuery.exec((err, count) => {
+              countResult = count;
+              return callback(err);
+            });
+          };
+
           const applyLimit  = (callback) => {
             baseQuery.limit(options.limit);
             callback();
           };
 
           const applySort = (callback) => {
-            baseQuery.sort(options.sort);
+            let sortee = {};
+            sortee[options.sortBy] = options.sortDir && typeof options.sortDir === 'string' && options.sortDir.toLowerCase() === 'asc' ? 1 : -1;
+            baseQuery.sort(sortee);
+            callback();
+          };
+
+          const applySkip = (callback) => {
+            console.log(options.skip);
+            baseQuery.skip(options.skip);
             callback();
           };
 
@@ -267,11 +286,14 @@ const Administrate  = (function() {
 
           _.defaults(options, {
             populateRelationships: false,
+            skip: undefined,
             limit: undefined,
-            sort: undefined
+            sortBy: undefined,
+            sortDir: undefined
           });
 
           baseQuery = Model.find(query);
+          countQuery = Model.count(query);
 
           if (options.populateRelationships) {
             asyncOp.push(populateRelationships);
@@ -281,9 +303,15 @@ const Administrate  = (function() {
             asyncOp.push(applyLimit);
           }
 
-          if (options.sort && (typeof options.sort === 'string' || typeof options.sort === 'object')) {
+          if (options.sortBy) {
             asyncOp.push(applySort);
           }
+
+          if (options.skip && typeof options.skip === 'number') {
+            asyncOp.push(applySkip);
+          }
+
+          asyncOp.push(applyCount);
 
           async.series(asyncOp, () => {
             baseQuery.exec((err, results) => {
@@ -292,7 +320,7 @@ const Administrate  = (function() {
                 return done(err);
               }
 
-              collection =_.map(results, (result) => {
+              collection = _.map(results, (result) => {
                 return  _.mapObject(_.pick(result, function(value, key) {
                   return _private.options.customListColumns.hasOwnProperty(Model.modelName.toLowerCase()) ? _private.options.customListColumns[Model.modelName.toLowerCase()].indexOf(key) >= 0 : (key.charAt(0) !== '_' && key.charAt(0) !== '$' && typeof value !== 'function' && _private.options.pathBlacklist.indexOf(key) === -1);
                 }), (value) => {
@@ -302,31 +330,62 @@ const Administrate  = (function() {
                   return value;
                 });
               });
-              return done(null, collection);
+              return done(null, { data: collection, count: countResult, totalPages: Math.ceil(countResult / options.limit)  });
             });
           });
         },
         getDoc: function(req, res, next, id) {
-          let query = {};
-          if (!id || id === 'new') {
-            res.locals.model = {};
-            return next();
-          }
-          if (id === 'search') {
+          const _query = () => {
+            let query = {};
+            let opts;
+            let limit = parseInt(req.query.limit, 10) || 25;
+            let page = parseInt(req.query.page, 10) || 1;
+
+            opts = {
+              populateRelationships: req.query.populateRelationships || false,
+              page: page,
+              skip: (page * limit) - limit,
+              limit: limit,
+              sortBy: (req.query.sortBy || 'createdAt'),
+              sortDir: (req.query.sortDir || -1)
+            };
+
             if (req.query) {
               _.each(req.query, (value, key) => {
-                let regex = new RegExp(value, 'i');
+                let regex;
+
+                if (Object.keys(opts).indexOf(key) >= 0) {
+                  return;
+                }
+
+                if (key === '_id') {
+                  query[key] = value;
+                  return;
+                }
+
+                regex = new RegExp(value, 'i');
                 query[key] = { $in: [ regex ]};
               });
             }
-            return _private.getData(req.admin.Model, query, (err, collection) => {
+
+            return _private.getData(req.admin.Model, query, opts, (err, collection) => {
               if (err) {
                 return next(err);
               }
 
               return res.json(collection);
             });
+          };
+
+          if (!id || id === 'new') {
+            res.locals.model = {};
+            return next();
           }
+
+          if (id === 'search') {
+            return _query();
+          }
+
           req.admin.Model.findById(id).exec((err, result) => {
             if (err) {
               return next(err);

@@ -30,7 +30,7 @@
             return location.assign(DEFAULT_REQUEST_PATH + '/' + response._id);
           }
 
-          controller.model = response;
+          controller.model = response.data;
         },
         error: (e) => {
           let response = JSON.parse(e.currentTarget.responseText);
