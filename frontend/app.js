@@ -1,9 +1,5 @@
 /* jshint browser:true */
 /* global ADMIN_LOCALS:true */
-/**
- * SWARM Website 2016
- * Main App Controller
- */
 import Router     from './lib/router';
 import config     from './config';
 

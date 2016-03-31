@@ -9,22 +9,22 @@
  */
 
  /* Begin Dependencies */
- const CONFIG     =     require('./lib/config');
- const helper     =     require('./lib/helper');
- const pluralize  =     require('pluralize');
- const _          =     require('underscore');
- const async      =     require('async');
- const express    =     require('express');
- const jade       =     require('jade');
- const path       =     require('path');
- const fs         =     require('fs');
- const moment     =     require('moment');
- const mongoose   =     require('mongoose');
+ var CONFIG     =     require('./lib/config');
+ var helper     =     require('./lib/helper');
+ var pluralize  =     require('pluralize');
+ var _          =     require('underscore');
+ var async      =     require('async');
+ var express    =     require('express');
+ var jade       =     require('jade');
+ var path       =     require('path');
+ var fs         =     require('fs');
+ var moment     =     require('moment');
+ var mongoose   =     require('mongoose');
  /* End Dependencies */
 
-const Administrate  = (function() {
+var Administrate  = (function() {
 
-    const _private  = {
+    var _private  = {
         options: undefined,
         models: {},
         bindRoutes: function(router, context) {
@@ -46,9 +46,9 @@ const Administrate  = (function() {
           return router;
         },
         parseSchema: function(schema, callback) {
-          let inputs = {};
+          var inputs = {};
           async.forEachOf(schema.paths, (path, name, done) => {
-            let type, ref;
+            var type, ref;
 
             if (path.options.hidden || _private.options.pathBlacklist.indexOf(name) >= 0) {
               return done();
@@ -86,7 +86,7 @@ const Administrate  = (function() {
               return done();
             }
 
-            inputs[name] = { type: type, label: name,  name: name, edit:  path.options.edit && path.options.edit === false ? false : true };
+            inputs[name] = { type: type, label: name,  name: name, edit:  path.options.edit && path.options.edit === false ? false : true, isFilterable: Boolean(path.options.filter) };
 
             if (ref) {
               inputs[name].ref = ref;
@@ -102,13 +102,13 @@ const Administrate  = (function() {
         },
         routes: {
           create: function(req, res, next) {
-            let data = req.body;
+            var data = req.body;
 
             if (!data) {
               return next('Empty request');
             }
 
-            let model = new req.admin.Model(data);
+            var model = new req.admin.Model(data);
             model.save((err, doc) => {
               if (err) {
                 return next(err);
@@ -130,14 +130,14 @@ const Administrate  = (function() {
             }
 
             function populateRelationships(callback) {
-              let relationships;
+              var relationships;
 
               relationships = _.pick(res.locals.inputs, (value) => {
                 return value.type === 'relationship';
               });
 
               async.forEachOf(relationships, (rel, key, done) => {
-                let Model = _private.models[rel.ref];
+                var Model = _private.models[rel.ref];
 
                 if (res.locals.model === {}) {
                   res.locals.model[key] = {};
@@ -199,7 +199,7 @@ const Administrate  = (function() {
             });
           },
           remove: function(req, res, next) {
-            let model = res.locals.model;
+            var model = res.locals.model;
             model.remove((err) => {
               if (err) {
                 return next(err);
@@ -208,8 +208,8 @@ const Administrate  = (function() {
             });
           },
           update: function(req, res, next) {
-            let data = req.body;
-            let model = res.locals.model;
+            var data = req.body;
+            var model = res.locals.model;
 
             if (!data) {
               return _private.routes.detail(req, res, next);
@@ -230,13 +230,13 @@ const Administrate  = (function() {
           }
         },
         getData: function(Model, query, options, done) {
-          let baseQuery;
-          let countQuery;
-          let countResult;
-          let asyncOp = [];
+          var baseQuery;
+          var countQuery;
+          var countResult;
+          var asyncOp = [];
 
-          const populateRelationships = (callback) => {
-            let populations = [];
+          var populateRelationships = (callback) => {
+            var populations = [];
             async.forEachOf(Model.schema.paths, (path, name, cb) => {
               if (typeof path.options.type.schemaName === 'undefined' || path.options.type.schemaName !== 'ObjectId' || path.options.hasOwnProperty('ref') === false) {
                 return cb();
@@ -250,26 +250,26 @@ const Administrate  = (function() {
             });
           };
 
-          const applyCount = (callback) => {
+          var applyCount = (callback) => {
             countQuery.exec((err, count) => {
               countResult = count;
               return callback(err);
             });
           };
 
-          const applyLimit  = (callback) => {
+          var applyLimit  = (callback) => {
             baseQuery.limit(options.limit);
             callback();
           };
 
-          const applySort = (callback) => {
-            let sortee = {};
+          var applySort = (callback) => {
+            var sortee = {};
             sortee[options.sortBy] = options.sortDir && typeof options.sortDir === 'string' && options.sortDir.toLowerCase() === 'asc' ? 1 : -1;
             baseQuery.sort(sortee);
             callback();
           };
 
-          const applySkip = (callback) => {
+          var applySkip = (callback) => {
             console.log(options.skip);
             baseQuery.skip(options.skip);
             callback();
@@ -286,8 +286,8 @@ const Administrate  = (function() {
 
           _.defaults(options, {
             populateRelationships: false,
-            skip: undefined,
-            limit: undefined,
+            skip: 0,
+            limit: 25,
             sortBy: undefined,
             sortDir: undefined
           });
@@ -315,7 +315,7 @@ const Administrate  = (function() {
 
           async.series(asyncOp, () => {
             baseQuery.exec((err, results) => {
-              let collection;
+              var collection;
               if (err) {
                 return done(err);
               }
@@ -330,16 +330,16 @@ const Administrate  = (function() {
                   return value;
                 });
               });
-              return done(null, { data: collection, count: countResult, totalPages: Math.ceil(countResult / options.limit)  });
+              return done(null, { data: collection, count: countResult, totalPages: Math.ceil(countResult / (options.limit || 1))  });
             });
           });
         },
         getDoc: function(req, res, next, id) {
-          const _query = () => {
-            let query = {};
-            let opts;
-            let limit = parseInt(req.query.limit, 10) || 25;
-            let page = parseInt(req.query.page, 10) || 1;
+          var _query = () => {
+            var query = {};
+            var opts;
+            var limit = parseInt(req.query.limit, 10) || 25;
+            var page = parseInt(req.query.page, 10) || 1;
 
             opts = {
               populateRelationships: req.query.populateRelationships || false,
@@ -352,7 +352,7 @@ const Administrate  = (function() {
 
             if (req.query) {
               _.each(req.query, (value, key) => {
-                let regex;
+                var regex;
 
                 if (Object.keys(opts).indexOf(key) >= 0) {
                   return;
@@ -401,7 +401,7 @@ const Administrate  = (function() {
           return next();
         },
         getModelsList: function(callback) {
-          let modelNames = [];
+          var modelNames = [];
 
           if (typeof callback === 'undefined' || typeof callback !== 'function') {
             callback = ()=>{};
@@ -421,7 +421,7 @@ const Administrate  = (function() {
             }
 
             async.each(files, (file, done) => {
-              let model;
+              var model;
 
               if (path.extname(file) !== '.js') {
                 return done();
@@ -464,9 +464,9 @@ const Administrate  = (function() {
         }
     };
 
-    const Administrate = function(options) {
-      const router = express.Router();
-      const defaults = {
+    var Administrate = function(options) {
+      var router = express.Router();
+      var defaults = {
         modelsPath: CONFIG.MODELS_PATH,
         viewsPath:  CONFIG.VIEWS_PATH,
         models: {},

@@ -1,7 +1,9 @@
-<ul class="pagination">
-    <li class="{{#ifeq currentPage 1}}disabled{{/ifeq}}" {{#ifeq currentPage 1}}disabled{{/ifeq}}><a href="#">&larr;</a></li>
-    {{#each pages}}
-        <li class="{{#ifeq ../currentPage this}}active{{/ifeq}}"><a href="#" >{{this}}</a></li>
-    {{/each}}
-    <li class="{{#ifeq currentPage totalPages}}disabled{{/ifeq}}" {{#ifeq currentPage totalPages}}disabled{{/ifeq}}><a href="#">&rarr;</a></li>
-</ul>
+{{#if totalPages }}
+    <ul class="pagination">
+        <li {{#ifeq currentPage 1}}class="disabled"{{/ifeq}} {{#ifeq currentPage 1}}disabled{{/ifeq}}><a href="#" data-page="prev">&larr;</a></li>
+        {{#each pages}}
+            <li {{#ifeq ../currentPage this}}class="active"{{/ifeq}}><a href="#" data-page="{{this}}">{{this}}</a></li>
+        {{/each}}
+        <li {{#ifeq currentPage totalPages}}class="disabled"{{/ifeq}} {{#ifeq currentPage totalPages}}disabled{{/ifeq}}><a href="#" data-page="next">&rarr;</a></li>
+    </ul>
+{{/if}}

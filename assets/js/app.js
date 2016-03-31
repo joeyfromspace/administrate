@@ -22,10 +22,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // Routes
 /* jshint browser:true */
 /* global ADMIN_LOCALS:true */
-/**
- * SWARM Website 2016
- * Main App Controller
- */
 var router = new _router2.default();
 var baseUrl = ADMIN_LOCALS.baseUrl;
 
@@ -34,7 +30,7 @@ router.add(baseUrl + '/:model', _list2.default);
 
 router.resolve();
 
-},{"./config":2,"./controllers/list":4,"./controllers/webfont":5,"./lib/router":11}],2:[function(require,module,exports){
+},{"./config":2,"./controllers/list":5,"./controllers/webfont":6,"./lib/router":12}],2:[function(require,module,exports){
 'use strict';
 
 /**
@@ -45,6 +41,72 @@ module.exports = {
 };
 
 },{}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _controller = require('../lib/controller');
+
+var _controller2 = _interopRequireDefault(_controller);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var _listFilter = require('../views/list-filter');
+
+var _listFilter2 = _interopRequireDefault(_listFilter);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ListFilterController = function (_Controller) {
+  _inherits(ListFilterController, _Controller);
+
+  function ListFilterController(ele, filters) {
+    _classCallCheck(this, ListFilterController);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ListFilterController).call(this, ele));
+
+    _this.element = ele;
+    _this.filters = filters;
+    return _this;
+  }
+
+  _createClass(ListFilterController, [{
+    key: 'load',
+    value: function load() {
+      var _this2 = this;
+
+      _lodash2.default.map(this.filters, function (filter) {
+        var view = new _listFilter2.default({ model: { name: filter.name, oldValue: '', value: '' }, filterType: filter.type });
+
+        _this2.element.appendChild(view.render());
+
+        view.on('update', function (e) {
+          _this2.emit('update', e);
+        });
+
+        return view;
+      });
+    }
+  }]);
+
+  return ListFilterController;
+}(_controller2.default);
+
+exports.default = ListFilterController;
+
+},{"../lib/controller":9,"../views/list-filter":15,"lodash":54}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -81,21 +143,24 @@ var ListPaginateController = function (_Controller) {
 
     var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ListPaginateController).call(this));
 
-    _this.paginateView = new _listPaginate2.default({ model: { currentPage: currentPage, totalPages: totalPages, pages: _lodash2.default.range(1, totalPages) } });
+    _this.paginateView = new _listPaginate2.default({ model: { currentPage: currentPage, totalPages: totalPages, pages: totalPages === 1 ? [1] : _lodash2.default.range(1, totalPages + 1) } });
 
-    _this.paginateView.on('render', function () {
+    _this.paginateView.once('render', function () {
       _this.emit('paginateViewUpdate', _this.paginateView.element);
 
       _this.paginateView.on('click', function (e) {
-        var t = e.currentTarget;
+        var t = e.target;
         var page = void 0;
         e.preventDefault();
 
-        if (t.tagName !== 'a' || t.parentElement && t.parentElement.classList.contains('disabled')) {
+        if (t.tagName.toLowerCase() !== 'a' || t.parentElement && t.parentElement.classList.contains('disabled')) {
           return;
         }
 
-        page = _lodash2.default.isNaN(parseInt(t.innerText, 10)) ? t.previousSibling ? _this.paginateView.model.currentPage + 1 : _this.paginateView.model.currentPage - 1 : parseInt(t.innerText, 10);
+        page = t.dataset.page === 'prev' ? _this.paginateView.model.currentPage - 1 : t.dataset.page === 'next' ? _this.paginateView.model.currentPage + 1 : parseInt(t.dataset.page, 10);
+        if (page < 1) {
+          page = 1;
+        }
 
         _this.setPage(page);
         _this.emit('pageChange', page);
@@ -119,7 +184,7 @@ var ListPaginateController = function (_Controller) {
     key: 'setTotalPages',
     value: function setTotalPages(total) {
       this.paginateView.model.totalPages = total;
-      this.paginateView.model.pages = _lodash2.default.range(1, total);
+      this.paginateView.model.pages = total === 1 ? [1] : _lodash2.default.range(1, total + 1);
       this.paginateView.render();
     }
   }]);
@@ -129,7 +194,7 @@ var ListPaginateController = function (_Controller) {
 
 exports.default = ListPaginateController;
 
-},{"../lib/controller":8,"../views/list-paginate":14,"lodash":52}],4:[function(require,module,exports){
+},{"../lib/controller":9,"../views/list-paginate":16,"lodash":54}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -170,6 +235,10 @@ var _listPaginate = require('./list-paginate');
 
 var _listPaginate2 = _interopRequireDefault(_listPaginate);
 
+var _listFilter = require('./list-filter');
+
+var _listFilter2 = _interopRequireDefault(_listFilter);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -194,13 +263,8 @@ var ListController = function (_Controller) {
 
     var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ListController).call(this));
 
-    _this.query = {
-      page: 1,
-      limit: 25,
-      populateRelationships: true,
-      sortBy: undefined,
-      sortDir: 'asc'
-    };
+    _this.applySort = _underscore2.default.throttle(_this._applySort, 1000);
+    _this.query = ListController.queryFactory();
     return _this;
   }
 
@@ -214,6 +278,7 @@ var ListController = function (_Controller) {
       this.parseUrl();
       this.listenSortClick();
       this.paginateController = new _listPaginate2.default(this.query.page, window.ADMIN_LOCALS.totalPages);
+      this.filterController = new _listFilter2.default(document.getElementById('filter-container'), window.ADMIN_LOCALS.filters);
 
       this.paginateController.on('paginateViewUpdate', function (element) {
         if (!_this2.paginateElement) {
@@ -228,7 +293,23 @@ var ListController = function (_Controller) {
         _this2.applySort();
       });
 
+      this.filterController.on('update', function (e) {
+        if (e.value && e.value !== '') {
+          _this2.query[e.name] = e.value;
+        }
+
+        if (e.filterType === 'checkbox' && e.value === false || e.filterType === 'text' && e.value === '' && _this2.query.hasOwnProperty(e.name)) {
+          _this2.query = _underscore2.default.omit(_this2.query, e.name);
+        }
+
+        _this2.query.page = 1;
+        _this2.paginateController.setPage(1);
+
+        _this2.applySort();
+      });
+
       this.paginateController.load();
+      this.filterController.load();
     }
   }, {
     key: '_req',
@@ -243,7 +324,7 @@ var ListController = function (_Controller) {
   }, {
     key: '_destroyData',
     value: function _destroyData() {
-      var rows = this.resultsContainer.querySelectorAll('tbody tr');
+      var rows = this.resultsContainer.querySelectorAll('tbody tr,div');
 
       return new Promise(function (resolve) {
         (0, _velocityAnimate2.default)(rows, { opacity: [0, 1], scaleY: [0, 1], translateY: ['-100%', 0] }, { duration: ANIMATION_DURATION, easing: ANIMATION_EASING }).then(function () {
@@ -256,8 +337,8 @@ var ListController = function (_Controller) {
       });
     }
   }, {
-    key: 'applySort',
-    value: function applySort() {
+    key: '_applySort',
+    value: function _applySort() {
       var _this3 = this;
 
       var query = this.query;
@@ -291,6 +372,7 @@ var ListController = function (_Controller) {
     value: function onSortClick(e) {
       e.preventDefault();
 
+      this.paginateController.setPage(1);
       this.query.sortBy = e.currentTarget.dataset.key;
       this.query.sortDir = this.query.sortDir === 'asc' ? 'desc' : 'asc';
 
@@ -299,6 +381,8 @@ var ListController = function (_Controller) {
   }, {
     key: 'render',
     value: function render(err, response) {
+      var _this5 = this;
+
       var jsonResponse = JSON.parse(response.responseText);
       var results = jsonResponse.data;
 
@@ -315,8 +399,9 @@ var ListController = function (_Controller) {
         return this.renderInfo('No results.');
       }
 
+      _velocityAnimate2.default.hook(this.tbody, 'opacity', 0);
       _async2.default.eachSeries(results, this.renderResult.bind(this), function () {
-        /* Post sort function callback */
+        (0, _velocityAnimate2.default)(_this5.tbody, { opacity: [1, 0], scaleY: [1, 0] }, { duration: ANIMATION_DURATION, easing: ANIMATION_EASING });
       });
     }
   }, {
@@ -336,6 +421,7 @@ var ListController = function (_Controller) {
 
       errorDiv.classList.add('alerts');
       errorDiv.classList.add('alerts-' + type);
+      errorDiv.classList.add('text-center');
       errorDiv.innerText = mesg;
 
       this.tbody.appendChild(errorDiv);
@@ -373,9 +459,18 @@ var ListController = function (_Controller) {
       row.columnOrder = columnOrder;
 
       this.tbody.appendChild(row.render());
-      (0, _velocityAnimate2.default)(row.element, { opacity: [1, 0], translateY: [0, '-100%'] }, { duration: ANIMATION_DURATION, easing: ANIMATION_EASING }).then(function () {
-        return callback();
-      });
+      return callback();
+    }
+  }], [{
+    key: 'queryFactory',
+    value: function queryFactory() {
+      return {
+        page: 1,
+        limit: 25,
+        populateRelationships: true,
+        sortBy: undefined,
+        sortDir: 'asc'
+      };
     }
   }]);
 
@@ -384,7 +479,7 @@ var ListController = function (_Controller) {
 
 exports.default = ListController;
 
-},{"../lib/controller":8,"../views/list-result-row":16,"./list-paginate":3,"async":18,"browser-request":19,"underscore":66,"urijs":69,"velocity-animate":71}],5:[function(require,module,exports){
+},{"../lib/controller":9,"../views/list-result-row":18,"./list-filter":3,"./list-paginate":4,"async":20,"browser-request":21,"underscore":68,"urijs":71,"velocity-animate":73}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -456,7 +551,7 @@ var WebFontController = function (_Controller) {
 
 exports.default = WebFontController;
 
-},{"../lib/Controller":6,"velocity-animate":71,"webfontloader":72}],6:[function(require,module,exports){
+},{"../lib/Controller":7,"velocity-animate":73,"webfontloader":74}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -515,7 +610,7 @@ var Controller = function (_EventEmitter) {
 
 exports.default = Controller;
 
-},{"./events":9}],7:[function(require,module,exports){
+},{"./events":10}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -636,9 +731,18 @@ var View = function (_EventEmitter) {
   }, {
     key: 'render',
     value: function render() {
+      var _this2 = this;
+
       var compiledTemplate = _handlebars2.default.compile(this.template);
       var content = compiledTemplate(this.model);
-      var element = void 0;
+      var element = void 0,
+          registryCopy = void 0;
+
+      /* Copy event registry prior to replacing DOM view */
+      if (this.isRendered) {
+        registryCopy = _lodash2.default.filter(this._eventRegistry, !_lodash2.default.matches({ event: 'render' }));
+        this.off();
+      }
 
       if (!this.isRendered || !this.element) {
         element = document.createElement(this.tag);
@@ -656,6 +760,12 @@ var View = function (_EventEmitter) {
       this._.element = element;
       this.isRendered = true;
       this.emit('render', this);
+
+      if (registryCopy && registryCopy.length) {
+        _lodash2.default.forEach(registryCopy, function (event) {
+          _this2.on(event);
+        });
+      }
 
       return element;
     }
@@ -686,7 +796,7 @@ var View = function (_EventEmitter) {
 
 exports.default = View;
 
-},{"./events":9,"./view-helpers":12,"handlebars":50,"jquery":51,"lodash":52}],8:[function(require,module,exports){
+},{"./events":10,"./view-helpers":13,"handlebars":52,"jquery":53,"lodash":54}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -745,7 +855,7 @@ var Controller = function (_EventEmitter) {
 
 exports.default = Controller;
 
-},{"./events":9}],9:[function(require,module,exports){
+},{"./events":10}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -858,7 +968,7 @@ var EventEmitter = function () {
 
 exports.default = EventEmitter;
 
-},{"lodash":52}],10:[function(require,module,exports){
+},{"lodash":54}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -903,7 +1013,7 @@ var Route = function () {
 
 exports.default = Route;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -963,17 +1073,23 @@ var Router = function () {
 
       // Iterate through routes for matches to the path, removing entries with duplicate controllers
       var routes = _underscore2.default.uniq(_underscore2.default.filter(this.routes, function (r) {
+        var pathArray = void 0,
+            pathQuery = void 0,
+            regexpQuery = void 0;
+
         if (r.path === '*') {
           return true;
         }
-        var pathArray = r.path.split('/');
-        var pathQuery = _underscore2.default.map(pathArray, function (p) {
+
+        pathArray = r.path.split('/');
+        pathQuery = _underscore2.default.map(pathArray, function (p) {
           if (p.charAt(0) === ':') {
-            return '(?:.+)';
+            return '(.[^\/]+)';
           }
           return p;
         });
-        var regexpQuery = new RegExp('^' + pathQuery.join('/') + '$', 'i');
+
+        regexpQuery = new RegExp('^' + pathQuery.join('/') + '$', 'i');
 
         return regexpQuery.test(location);
       }), function (r) {
@@ -995,7 +1111,7 @@ var Router = function () {
 
 exports.default = Router;
 
-},{"./route":10,"underscore":66}],12:[function(require,module,exports){
+},{"./route":11,"underscore":68}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1014,7 +1130,7 @@ exports.default = function () {
   });
 }();
 
-},{"handlebars":50}],13:[function(require,module,exports){
+},{"handlebars":52}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1135,9 +1251,18 @@ var View = function (_EventEmitter) {
   }, {
     key: 'render',
     value: function render() {
+      var _this2 = this;
+
       var compiledTemplate = _handlebars2.default.compile(this.template);
       var content = compiledTemplate(this.model);
-      var element = void 0;
+      var element = void 0,
+          registryCopy = void 0;
+
+      /* Copy event registry prior to replacing DOM view */
+      if (this.isRendered) {
+        registryCopy = _lodash2.default.filter(this._eventRegistry, !_lodash2.default.matches({ event: 'render' }));
+        this.off();
+      }
 
       if (!this.isRendered || !this.element) {
         element = document.createElement(this.tag);
@@ -1155,6 +1280,12 @@ var View = function (_EventEmitter) {
       this._.element = element;
       this.isRendered = true;
       this.emit('render', this);
+
+      if (registryCopy && registryCopy.length) {
+        _lodash2.default.forEach(registryCopy, function (event) {
+          _this2.on(event);
+        });
+      }
 
       return element;
     }
@@ -1185,7 +1316,109 @@ var View = function (_EventEmitter) {
 
 exports.default = View;
 
-},{"./events":9,"./view-helpers":12,"handlebars":50,"jquery":51,"lodash":52}],14:[function(require,module,exports){
+},{"./events":10,"./view-helpers":13,"handlebars":52,"jquery":53,"lodash":54}],15:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _view = require('../lib/view');
+
+var _view2 = _interopRequireDefault(_view);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var filterTemplate = "<div class=\"form-group col-sm-4 col-xs-12\">\n    {{#ifeq filterType 'text'}}\n        <label>{{name}}</label>\n        <input name=\"{{name}}\" class=\"form-control\" type=\"text\">\n    {{/ifeq}}\n    {{#ifeq filterType 'checkbox'}}\n        <div class=\"checkbox\">\n            <label>\n                <input type=\"checkbox\" name=\"{{name}}\" {{#if value }}checked{{/if}}>\n                {{name}}\n            </label>\n        </div>\n    {{/ifeq}}\n</div>";
+
+var ListFilterView = function (_View) {
+  _inherits(ListFilterView, _View);
+
+  function ListFilterView(opts) {
+    _classCallCheck(this, ListFilterView);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ListFilterView).call(this, opts));
+
+    _this.tag = 'div';
+    _this.viewName = 'filter';
+    _this.template = filterTemplate;
+    _this.filterType = opts.filterType || 'text';
+    _this.events = {
+      text: { event: 'keyup', handler: _this.searchText.bind(_this) },
+      checkbox: { event: 'change', handler: _this.toggleCheckbox.bind(_this) }
+    };
+
+    _this.on('render', _this.bindHandlers.bind(_this));
+    return _this;
+  }
+
+  _createClass(ListFilterView, [{
+    key: 'toggleCheckbox',
+    value: function toggleCheckbox(e) {
+      var t = e.currentTarget;
+
+      this.model.value = t.checked;
+      this.parseInput();
+    }
+  }, {
+    key: 'searchText',
+    value: function searchText(e) {
+      var validKeys = _lodash2.default.concat([8], [32], _lodash2.default.range(48, 57), _lodash2.default.range(65, 90), [46], _lodash2.default.range(188, 222));
+      var t = e.currentTarget;
+
+      if (validKeys.indexOf(e.keyCode) === -1 || this.model.value === t.value) {
+        return;
+      }
+
+      this.model.oldValue = this.model.value;
+      this.model.value = t.value;
+      this.parseInput();
+    }
+  }, {
+    key: 'bindHandlers',
+    value: function bindHandlers() {
+      var _this2 = this;
+
+      var input = this.element.querySelector('input');
+      input.addEventListener(this.events[this.filterType].event, this.events[this.filterType].handler);
+
+      this.on('destroy', function () {
+        input.removeEventListener(_this2.events[_this2.filterType].event, _this2.events[_this2.filterType].handler);
+      });
+    }
+  }, {
+    key: 'parseInput',
+    value: function parseInput() {
+      this.emit('update', { value: this.model.value, name: this.model.name, filterType: this.filterType });
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      this.model.filterType = this.filterType;
+      return _get(Object.getPrototypeOf(ListFilterView.prototype), 'render', this).call(this);
+    }
+  }]);
+
+  return ListFilterView;
+}(_view2.default);
+
+exports.default = ListFilterView;
+
+},{"../lib/view":14,"lodash":54}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1204,7 +1437,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var paginationTemplate = "<ul class=\"pagination\">\n    <li class=\"{{#ifeq currentPage 1}}disabled{{/ifeq}}\" {{#ifeq currentPage 1}}disabled{{/ifeq}}><a href=\"#\">&larr;</a></li>\n    {{#each pages}}\n        <li class=\"{{#ifeq ../currentPage this}}active{{/ifeq}}\"><a href=\"#\" >{{this}}</a></li>\n    {{/each}}\n    <li class=\"{{#ifeq currentPage totalPages}}disabled{{/ifeq}}\" {{#ifeq currentPage totalPages}}disabled{{/ifeq}}><a href=\"#\">&rarr;</a></li>\n</ul>";
+var paginationTemplate = "{{#if totalPages }}\n    <ul class=\"pagination\">\n        <li {{#ifeq currentPage 1}}class=\"disabled\"{{/ifeq}} {{#ifeq currentPage 1}}disabled{{/ifeq}}><a href=\"#\" data-page=\"prev\">&larr;</a></li>\n        {{#each pages}}\n            <li {{#ifeq ../currentPage this}}class=\"active\"{{/ifeq}}><a href=\"#\" data-page=\"{{this}}\">{{this}}</a></li>\n        {{/each}}\n        <li {{#ifeq currentPage totalPages}}class=\"disabled\"{{/ifeq}} {{#ifeq currentPage totalPages}}disabled{{/ifeq}}><a href=\"#\" data-page=\"next\">&rarr;</a></li>\n    </ul>\n{{/if}}";
 
 var ListPaginateView = function (_View) {
   _inherits(ListPaginateView, _View);
@@ -1225,7 +1458,7 @@ var ListPaginateView = function (_View) {
 
 exports.default = ListPaginateView;
 
-},{"../lib/view":13}],15:[function(require,module,exports){
+},{"../lib/view":14}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1253,7 +1486,7 @@ var ListResultColumnView = function (_View) {
     var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ListResultColumnView).call(this, opts));
 
     _this.viewName = 'result col';
-    _this.template = '{{#if link }}<a href="/{{modelName}}s/{{id}}">{{/if}}{{value}}{{#if link}}</a>{{/if}}';
+    _this.template = '{{#if link }}<a href="{{baseUrl}}/{{modelName}}/{{id}}">{{/if}}{{value}}{{#if link}}</a>{{/if}}';
     _this.tag = 'td';
     return _this;
   }
@@ -1263,7 +1496,7 @@ var ListResultColumnView = function (_View) {
 
 exports.default = ListResultColumnView;
 
-},{"../lib/View":7}],16:[function(require,module,exports){
+},{"../lib/View":8}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1322,7 +1555,7 @@ var ListResultRowView = function (_View) {
         var col = new _listResultCol2.default();
 
         if (colKey === '_id') {
-          col.model = { value: _this2.model.id, link: true, modelName: ADMIN_LOCALS.modelName.toLowerCase(), id: _this2.model.id };
+          col.model = { value: _this2.model.id, link: true, baseUrl: ADMIN_LOCALS.baseUrl.toLowerCase(), modelName: ADMIN_LOCALS.modelName.toLowerCase(), id: _this2.model.id };
         } else if (_typeof(_this2.model[colKey]) !== 'object') {
           col.model = { value: _this2.model[colKey] };
         } else {
@@ -1345,7 +1578,7 @@ var ListResultRowView = function (_View) {
 
 exports.default = ListResultRowView;
 
-},{"../lib/View":7,"./list-result-col":15}],17:[function(require,module,exports){
+},{"../lib/View":8,"./list-result-col":17}],19:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 1.0.0 Copyright (c) 2011-2015, The Dojo Foundation All Rights Reserved.
@@ -1651,7 +1884,7 @@ module.exports = amdefine;
 
 }).call(this,require('_process'),"/node_modules/amdefine/amdefine.js")
 
-},{"_process":54,"path":53}],18:[function(require,module,exports){
+},{"_process":56,"path":55}],20:[function(require,module,exports){
 (function (process,global){
 /*!
  * async
@@ -2921,7 +3154,7 @@ module.exports = amdefine;
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"_process":54}],19:[function(require,module,exports){
+},{"_process":56}],21:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -3417,9 +3650,9 @@ function b64_enc (data) {
 }));
 //UMD FOOTER END
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -3486,7 +3719,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars.runtime":22,"./handlebars/compiler/ast":24,"./handlebars/compiler/base":25,"./handlebars/compiler/compiler":27,"./handlebars/compiler/javascript-compiler":29,"./handlebars/compiler/visitor":32,"./handlebars/no-conflict":46}],22:[function(require,module,exports){
+},{"./handlebars.runtime":24,"./handlebars/compiler/ast":26,"./handlebars/compiler/base":27,"./handlebars/compiler/compiler":29,"./handlebars/compiler/javascript-compiler":31,"./handlebars/compiler/visitor":34,"./handlebars/no-conflict":48}],24:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -3554,7 +3787,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars/base":23,"./handlebars/exception":36,"./handlebars/no-conflict":46,"./handlebars/runtime":47,"./handlebars/safe-string":48,"./handlebars/utils":49}],23:[function(require,module,exports){
+},{"./handlebars/base":25,"./handlebars/exception":38,"./handlebars/no-conflict":48,"./handlebars/runtime":49,"./handlebars/safe-string":50,"./handlebars/utils":51}],25:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -3660,7 +3893,7 @@ exports.createFrame = _utils.createFrame;
 exports.logger = _logger2['default'];
 
 
-},{"./decorators":34,"./exception":36,"./helpers":37,"./logger":45,"./utils":49}],24:[function(require,module,exports){
+},{"./decorators":36,"./exception":38,"./helpers":39,"./logger":47,"./utils":51}],26:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -3693,7 +3926,7 @@ exports['default'] = AST;
 module.exports = exports['default'];
 
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -3743,7 +3976,7 @@ function parse(input, options) {
 }
 
 
-},{"../utils":49,"./helpers":28,"./parser":30,"./whitespace-control":33}],26:[function(require,module,exports){
+},{"../utils":51,"./helpers":30,"./parser":32,"./whitespace-control":35}],28:[function(require,module,exports){
 /* global define */
 'use strict';
 
@@ -3911,7 +4144,7 @@ exports['default'] = CodeGen;
 module.exports = exports['default'];
 
 
-},{"../utils":49,"source-map":55}],27:[function(require,module,exports){
+},{"../utils":51,"source-map":57}],29:[function(require,module,exports){
 /* eslint-disable new-cap */
 
 'use strict';
@@ -4485,7 +4718,7 @@ function transformLiteralToPath(sexpr) {
 }
 
 
-},{"../exception":36,"../utils":49,"./ast":24}],28:[function(require,module,exports){
+},{"../exception":38,"../utils":51,"./ast":26}],30:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4717,7 +4950,7 @@ function preparePartialBlock(open, program, close, locInfo) {
 }
 
 
-},{"../exception":36}],29:[function(require,module,exports){
+},{"../exception":38}],31:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5845,7 +6078,7 @@ exports['default'] = JavaScriptCompiler;
 module.exports = exports['default'];
 
 
-},{"../base":23,"../exception":36,"../utils":49,"./code-gen":26}],30:[function(require,module,exports){
+},{"../base":25,"../exception":38,"../utils":51,"./code-gen":28}],32:[function(require,module,exports){
 /* istanbul ignore next */
 /* Jison generated parser */
 "use strict";
@@ -6585,7 +6818,7 @@ var handlebars = (function () {
 exports['default'] = handlebars;
 
 
-},{}],31:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /* eslint-disable new-cap */
 'use strict';
 
@@ -6773,7 +7006,7 @@ PrintVisitor.prototype.HashPair = function (pair) {
 /* eslint-enable new-cap */
 
 
-},{"./visitor":32}],32:[function(require,module,exports){
+},{"./visitor":34}],34:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -6915,7 +7148,7 @@ exports['default'] = Visitor;
 module.exports = exports['default'];
 
 
-},{"../exception":36}],33:[function(require,module,exports){
+},{"../exception":38}],35:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7138,7 +7371,7 @@ exports['default'] = WhitespaceControl;
 module.exports = exports['default'];
 
 
-},{"./visitor":32}],34:[function(require,module,exports){
+},{"./visitor":34}],36:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7156,7 +7389,7 @@ function registerDefaultDecorators(instance) {
 }
 
 
-},{"./decorators/inline":35}],35:[function(require,module,exports){
+},{"./decorators/inline":37}],37:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7187,7 +7420,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":49}],36:[function(require,module,exports){
+},{"../utils":51}],38:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7229,7 +7462,7 @@ exports['default'] = Exception;
 module.exports = exports['default'];
 
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7277,7 +7510,7 @@ function registerDefaultHelpers(instance) {
 }
 
 
-},{"./helpers/block-helper-missing":38,"./helpers/each":39,"./helpers/helper-missing":40,"./helpers/if":41,"./helpers/log":42,"./helpers/lookup":43,"./helpers/with":44}],38:[function(require,module,exports){
+},{"./helpers/block-helper-missing":40,"./helpers/each":41,"./helpers/helper-missing":42,"./helpers/if":43,"./helpers/log":44,"./helpers/lookup":45,"./helpers/with":46}],40:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7318,7 +7551,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":49}],39:[function(require,module,exports){
+},{"../utils":51}],41:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7414,7 +7647,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":36,"../utils":49}],40:[function(require,module,exports){
+},{"../exception":38,"../utils":51}],42:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7441,7 +7674,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":36}],41:[function(require,module,exports){
+},{"../exception":38}],43:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7472,7 +7705,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":49}],42:[function(require,module,exports){
+},{"../utils":51}],44:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7500,7 +7733,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7514,7 +7747,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7549,7 +7782,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":49}],45:[function(require,module,exports){
+},{"../utils":51}],47:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7598,7 +7831,7 @@ exports['default'] = logger;
 module.exports = exports['default'];
 
 
-},{"./utils":49}],46:[function(require,module,exports){
+},{"./utils":51}],48:[function(require,module,exports){
 (function (global){
 /* global window */
 'use strict';
@@ -7623,7 +7856,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],47:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -7917,7 +8150,7 @@ function executeDecorators(fn, prog, container, depths, data, blockParams) {
 }
 
 
-},{"./base":23,"./exception":36,"./utils":49}],48:[function(require,module,exports){
+},{"./base":25,"./exception":38,"./utils":51}],50:[function(require,module,exports){
 // Build out our basic SafeString type
 'use strict';
 
@@ -7934,7 +8167,7 @@ exports['default'] = SafeString;
 module.exports = exports['default'];
 
 
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -8060,7 +8293,7 @@ function appendContextPath(contextPath, id) {
 }
 
 
-},{}],50:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 // USAGE:
 // var handlebars = require('handlebars');
 /* eslint-disable no-var */
@@ -8087,7 +8320,7 @@ if (typeof require !== 'undefined' && require.extensions) {
   require.extensions['.hbs'] = extension;
 }
 
-},{"../dist/cjs/handlebars":21,"../dist/cjs/handlebars/compiler/printer":31,"fs":20}],51:[function(require,module,exports){
+},{"../dist/cjs/handlebars":23,"../dist/cjs/handlebars/compiler/printer":33,"fs":22}],53:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.2.1
  * http://jquery.com/
@@ -17920,7 +18153,7 @@ if ( !noGlobal ) {
 return jQuery;
 }));
 
-},{}],52:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -32998,7 +33231,7 @@ return jQuery;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],53:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -33227,7 +33460,7 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }).call(this,require('_process'))
 
-},{"_process":54}],54:[function(require,module,exports){
+},{"_process":56}],56:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -33320,7 +33553,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],55:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -33330,7 +33563,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":62,"./source-map/source-map-generator":63,"./source-map/source-node":64}],56:[function(require,module,exports){
+},{"./source-map/source-map-consumer":64,"./source-map/source-map-generator":65,"./source-map/source-node":66}],58:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -33439,7 +33672,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":65,"amdefine":17}],57:[function(require,module,exports){
+},{"./util":67,"amdefine":19}],59:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -33587,7 +33820,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":58,"amdefine":17}],58:[function(require,module,exports){
+},{"./base64":60,"amdefine":19}],60:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -33662,7 +33895,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":17}],59:[function(require,module,exports){
+},{"amdefine":19}],61:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -33781,7 +34014,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":17}],60:[function(require,module,exports){
+},{"amdefine":19}],62:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2014 Mozilla Foundation and contributors
@@ -33869,7 +34102,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":65,"amdefine":17}],61:[function(require,module,exports){
+},{"./util":67,"amdefine":19}],63:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -33991,7 +34224,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":17}],62:[function(require,module,exports){
+},{"amdefine":19}],64:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -35070,7 +35303,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":56,"./base64-vlq":57,"./binary-search":59,"./quick-sort":61,"./util":65,"amdefine":17}],63:[function(require,module,exports){
+},{"./array-set":58,"./base64-vlq":59,"./binary-search":61,"./quick-sort":63,"./util":67,"amdefine":19}],65:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -35471,7 +35704,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":56,"./base64-vlq":57,"./mapping-list":60,"./util":65,"amdefine":17}],64:[function(require,module,exports){
+},{"./array-set":58,"./base64-vlq":59,"./mapping-list":62,"./util":67,"amdefine":19}],66:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -35887,7 +36120,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":63,"./util":65,"amdefine":17}],65:[function(require,module,exports){
+},{"./source-map-generator":65,"./util":67,"amdefine":19}],67:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -36259,7 +36492,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":17}],66:[function(require,module,exports){
+},{"amdefine":19}],68:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -37809,7 +38042,7 @@ define(function (require, exports, module) {
   }
 }.call(this));
 
-},{}],67:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 /*!
  * URI.js - Mutating URLs
  * IPv6 Support
@@ -37998,7 +38231,7 @@ define(function (require, exports, module) {
   };
 }));
 
-},{}],68:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 /*!
  * URI.js - Mutating URLs
  * Second Level Domain (SLD) Support
@@ -38240,7 +38473,7 @@ define(function (require, exports, module) {
   return SLD;
 }));
 
-},{}],69:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 /*!
  * URI.js - Mutating URLs
  *
@@ -40421,7 +40654,7 @@ define(function (require, exports, module) {
   return URI;
 }));
 
-},{"./IPv6":67,"./SecondLevelDomains":68,"./punycode":70}],70:[function(require,module,exports){
+},{"./IPv6":69,"./SecondLevelDomains":70,"./punycode":72}],72:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.0 by @mathias */
 ;(function(root) {
@@ -40959,7 +41192,7 @@ define(function (require, exports, module) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],71:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 /*! VelocityJS.org (1.2.3). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 /*************************
@@ -44846,7 +45079,7 @@ return function (global, window, document, undefined) {
 /* The CSS spec mandates that the translateX/Y/Z transforms are %-relative to the element itself -- not its parent.
 Velocity, however, doesn't make this distinction. Thus, converting to or from the % unit with these subproperties
 will produce an inaccurate conversion value. The same issue exists with the cx/cy attributes of SVG circles and ellipses. */
-},{}],72:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 /* Web Font Loader v1.6.22 - (c) Adobe Systems, Google. License: Apache 2.0 */
 (function(){function aa(a,b,d){return a.call.apply(a.bind,arguments)}function ba(a,b,d){if(!a)throw Error();if(2<arguments.length){var c=Array.prototype.slice.call(arguments,2);return function(){var d=Array.prototype.slice.call(arguments);Array.prototype.unshift.apply(d,c);return a.apply(b,d)}}return function(){return a.apply(b,arguments)}}function p(a,b,d){p=Function.prototype.bind&&-1!=Function.prototype.bind.toString().indexOf("native code")?aa:ba;return p.apply(null,arguments)}var q=Date.now||function(){return+new Date};function ca(a,b){this.a=a;this.m=b||a;this.c=this.m.document}var da=!!window.FontFace;function t(a,b,d,c){b=a.c.createElement(b);if(d)for(var e in d)d.hasOwnProperty(e)&&("style"==e?b.style.cssText=d[e]:b.setAttribute(e,d[e]));c&&b.appendChild(a.c.createTextNode(c));return b}function u(a,b,d){a=a.c.getElementsByTagName(b)[0];a||(a=document.documentElement);a.insertBefore(d,a.lastChild)}function v(a){a.parentNode&&a.parentNode.removeChild(a)}
 function w(a,b,d){b=b||[];d=d||[];for(var c=a.className.split(/\s+/),e=0;e<b.length;e+=1){for(var f=!1,g=0;g<c.length;g+=1)if(b[e]===c[g]){f=!0;break}f||c.push(b[e])}b=[];for(e=0;e<c.length;e+=1){f=!1;for(g=0;g<d.length;g+=1)if(c[e]===d[g]){f=!0;break}f||b.push(c[e])}a.className=b.join(" ").replace(/\s+/g," ").replace(/^\s+|\s+$/,"")}function y(a,b){for(var d=a.className.split(/\s+/),c=0,e=d.length;c<e;c++)if(d[c]==b)return!0;return!1}

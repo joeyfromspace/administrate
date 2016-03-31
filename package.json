@@ -13,7 +13,7 @@
   "homepage": "https://github.com/joeyfromspace/administrate",
   "license": "MIT",
   "author": "Joey Lappin (SWARM)",
-  "version": "0.6.0",
+  "version": "0.6.5",
   "engines": {
     "node": ">=4.4.1"
   },

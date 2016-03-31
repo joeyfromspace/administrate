@@ -8,7 +8,7 @@ mixin populate(doc)
     if sortOrder
       each key in sortOrder
         if key !== 'id'
-          if typeof doc[key] !== 'object'
+          if typeof doc[key] !== 'object' || Object.is(doc[key], null)
             td=doc[key]
           else
             if doc[key]._id
@@ -30,9 +30,7 @@ mixin populate(doc)
 block content
   .container
     .row: .col-xs-12: h1=title + ' List'
-    //-
-      .row: .col-xs-12
-        +filters(inputs)
+    .row: #filter-container
     .row: .col-xs-12
       table.table#results-table
         thead: tr
@@ -56,11 +54,12 @@ block content
       .col-md-2: a.btn.btn-info.btn-lg.btn-block(href=baseUrl + '/' + title.toLowerCase() + '/new') &plus; Add New
       .col-md-2: a.btn.btn-default.btn-lg.btn-block(href=baseUrl) Back
   block scripts
+    -var filters = _._.filter(inputs, function(input) { return input.isFilterable; });
     script.
       if (typeof ADMIN_LOCALS === 'undefined') {
         window.ADMIN_LOCALS = {};
       }
       ADMIN_LOCALS.baseUrl = "#{baseUrl}";
       ADMIN_LOCALS.modelName = "#{title}";
-      ADMIN_LOCALS.totalPages = parseInt("#{count}", 10);
-      ADMIN_LOCALS.totalPages = parseInt("#{totalPages}", 10);
+      ADMIN_LOCALS.totalPages = !{parseInt(totalPages, 10)};
+      ADMIN_LOCALS.filters = !{JSON.stringify(filters)};

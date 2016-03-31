@@ -9,7 +9,11 @@ html
       link(href=baseUrl + "/css/selectize.bootstrap3.css" rel="stylesheet")
       link(href=baseUrl + "/css/datepicker.bootstrap3.css" rel="stylesheet")
       link(href=baseUrl + '/css/custom.css' rel='stylesheet')
-  body
+      style.
+        body {
+          opacity: 0;
+        }
+body
     +header(appName, loggedInUser, baseUrl, models, active, logoutLink)
     block messages
       if messages
