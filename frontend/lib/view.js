@@ -94,7 +94,13 @@ class View extends EventEmitter {
   render() {
     let compiledTemplate = handlebars.compile(this.template);
     let content = compiledTemplate(this.model);
-    let element;
+    let element, registryCopy;
+
+    /* Copy event registry prior to replacing DOM view */
+    if (this.isRendered) {
+      registryCopy = _.filter(this._eventRegistry, !_.matches({ event: 'render' }));
+      this.off();
+    }
 
     if (!this.isRendered || !this.element) {
       element = document.createElement(this.tag);
@@ -114,8 +120,13 @@ class View extends EventEmitter {
     this.isRendered = true;
     this.emit('render', this);
 
-    return element;
+    if (registryCopy && registryCopy.length) {
+      _.forEach(registryCopy, (event) => {
+        this.on(event);
+      });
+    }
 
+    return element;
   }
 }
 

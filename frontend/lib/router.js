@@ -33,17 +33,21 @@ class Router {
 
     // Iterate through routes for matches to the path, removing entries with duplicate controllers
     let routes = _.uniq(_.filter(this.routes, (r) => {
+      let pathArray, pathQuery, regexpQuery;
+
       if (r.path === '*') {
         return true;
       }
-      let pathArray = r.path.split('/');
-      let pathQuery = _.map(pathArray, (p) => {
+
+      pathArray = r.path.split('/');
+      pathQuery = _.map(pathArray, (p) => {
         if (p.charAt(0) === ':') {
-          return '(?:.+)';
+          return '(.[^\/]+)';
         }
         return p;
       });
-      let regexpQuery = new RegExp('^' + pathQuery.join('/') + '$', 'i');
+
+      regexpQuery = new RegExp('^' + pathQuery.join('/') + '$', 'i');
 
       return regexpQuery.test(location);
     }), (r) => {

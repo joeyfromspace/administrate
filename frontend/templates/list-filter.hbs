@@ -1,0 +1,14 @@
+<div class="form-group col-sm-4 col-xs-12">
+    {{#ifeq filterType 'text'}}
+        <label>{{name}}</label>
+        <input name="{{name}}" class="form-control" type="text">
+    {{/ifeq}}
+    {{#ifeq filterType 'checkbox'}}
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" name="{{name}}" {{#if value }}checked{{/if}}>
+                {{name}}
+            </label>
+        </div>
+    {{/ifeq}}
+</div>

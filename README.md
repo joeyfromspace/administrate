@@ -49,6 +49,9 @@ const customListColumns = {
 ##Schema modifiers
 Administrate supports a few options that affect how Schema paths are displayed and edited in the admin. Slip these into the schema path options and they will automatically be applied in the admin.
 
+###Filter Support
+Add `filter: true` to a schema path to make it filterable in the admin view.
+
 ###Textarea Support
 Add `extended: true` to your `String` schema paths to display a textarea in the admin interface instead of a single text input. Useful for editing blog posts and other larger bodies of text.
 
@@ -63,4 +66,5 @@ Tests. They don't exist.
 
 ##Changelog
 
+**03-31-2016**: Added filtration, improved sorting and pagination, frontend bug fixes
 **03-29-2016**: Updated list view with pagination and sorting.

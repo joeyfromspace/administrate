@@ -34,12 +34,10 @@
         },
         error: (e) => {
           let response = JSON.parse(e.currentTarget.responseText);
-          console.log('error');
           console.error(response);
         },
         abort: (e) => {
           let response = JSON.parse(e.currentTarget.responseText);
-          console.log('abort');
           console.info(response);
         },
         loadend: () => {

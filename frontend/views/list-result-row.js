@@ -22,7 +22,7 @@ class ListResultRowView extends View {
       let col = new ListResultColumnView();
 
       if (colKey === '_id') {
-        col.model = { value: this.model.id, link: true, modelName: ADMIN_LOCALS.modelName.toLowerCase(), id: this.model.id };
+        col.model = { value: this.model.id, link: true, baseUrl: ADMIN_LOCALS.baseUrl.toLowerCase(), modelName: ADMIN_LOCALS.modelName.toLowerCase(), id: this.model.id };
       } else if (typeof this.model[colKey] !== 'object') {
         col.model = {value: this.model[colKey]};
       } else {

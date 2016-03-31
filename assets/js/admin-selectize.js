@@ -42,7 +42,7 @@
                     callback();
                   },
                   success: function(res) {
-                    callback(res.slice(0, 10));
+                    callback(res.data.slice(0, 10));
                   }
               });
           }

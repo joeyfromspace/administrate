@@ -10,6 +10,7 @@ import async      from 'async';
 
 import ListResultRowView from '../views/list-result-row';
 import ListPaginateController from './list-paginate';
+import ListFilterController from './list-filter';
 
 const JSON_API_PREFIX = window.location.pathname + '/search';
 const ANIMATION_DURATION = 200;
@@ -20,7 +21,12 @@ class ListController extends Controller {
   constructor() {
     super();
 
-    this.query = {
+    this.applySort = _.throttle(this._applySort, 1000);
+    this.query = ListController.queryFactory();
+  }
+
+  static queryFactory() {
+    return {
       page: 1,
       limit: 25,
       populateRelationships: true,
@@ -35,6 +41,7 @@ class ListController extends Controller {
     this.parseUrl();
     this.listenSortClick();
     this.paginateController = new ListPaginateController(this.query.page, window.ADMIN_LOCALS.totalPages);
+    this.filterController = new ListFilterController(document.getElementById('filter-container'), window.ADMIN_LOCALS.filters);
 
     this.paginateController.on('paginateViewUpdate', (element) => {
       if (!this.paginateElement) {
@@ -49,7 +56,23 @@ class ListController extends Controller {
       this.applySort();
     });
 
+    this.filterController.on('update', (e) => {
+      if (e.value && e.value !== '' ) {
+        this.query[e.name] = e.value;
+      }
+
+      if ((e.filterType === 'checkbox' && e.value === false) || e.filterType === 'text' && e.value === '' && this.query.hasOwnProperty(e.name)) {
+        this.query = _.omit(this.query, e.name);
+      }
+
+      this.query.page = 1;
+      this.paginateController.setPage(1);
+
+      this.applySort();
+    });
+
     this.paginateController.load();
+    this.filterController.load();
   }
 
 
@@ -63,7 +86,7 @@ class ListController extends Controller {
   }
 
   _destroyData() {
-    let rows = this.resultsContainer.querySelectorAll('tbody tr');
+    let rows = this.resultsContainer.querySelectorAll('tbody tr,div');
 
     return new Promise((resolve) => {
       velocity(rows, { opacity: [0,1], scaleY:[0,1], translateY:['-100%',0]}, { duration: ANIMATION_DURATION, easing: ANIMATION_EASING }).then(() => {
@@ -76,7 +99,7 @@ class ListController extends Controller {
     });
   }
 
-  applySort() {
+  _applySort() {
     let query = this.query;
     this.loader = this.renderLoading();
 
@@ -103,6 +126,7 @@ class ListController extends Controller {
   onSortClick(e) {
     e.preventDefault();
 
+    this.paginateController.setPage(1);
     this.query.sortBy = e.currentTarget.dataset.key;
     this.query.sortDir = this.query.sortDir === 'asc' ? 'desc' : 'asc';
 
@@ -126,8 +150,9 @@ class ListController extends Controller {
       return this.renderInfo('No results.');
     }
 
+    velocity.hook(this.tbody, 'opacity', 0);
     async.eachSeries(results, this.renderResult.bind(this), () => {
-      /* Post sort function callback */
+      velocity(this.tbody, { opacity: [1, 0], scaleY: [1, 0]}, { duration: ANIMATION_DURATION, easing: ANIMATION_EASING });
     });
   }
 
@@ -144,6 +169,7 @@ class ListController extends Controller {
 
     errorDiv.classList.add('alerts');
     errorDiv.classList.add('alerts-' + type);
+    errorDiv.classList.add('text-center');
     errorDiv.innerText = mesg;
 
     this.tbody.appendChild(errorDiv);
@@ -179,9 +205,7 @@ class ListController extends Controller {
     row.columnOrder = columnOrder;
 
     this.tbody.appendChild(row.render());
-    velocity(row.element, { opacity: [1, 0], translateY: [0, '-100%']}, { duration: ANIMATION_DURATION, easing: ANIMATION_EASING }).then(() => {
-      return callback();
-    });
+    return callback();
   }
 
 }
