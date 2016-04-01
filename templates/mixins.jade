@@ -22,6 +22,11 @@ mixin form-input(input, model)
           label.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
           .col-xs-12.col-md-10
             input.form-control(type="text" name=input.name value=value disabled=!input.edit)
+      when 'number'
+        .form-group
+          label.col-md-2.control-label(for=input.name)=_.toProperCase(input.label)
+          .col-xs-12.col-md-10
+            input.form-control(type="number" name=input.name value=value disabled=!input.edit)
       when 'checkbox'
         .form-group: .col-md-offset-2.col-md-10
           .checkbox

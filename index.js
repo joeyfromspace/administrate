@@ -193,7 +193,9 @@ var Administrate  = (function() {
             Model.findById(res.locals.model[key]).exec((err, doc) => {
               res.locals.model[key] = doc ? doc : {};
 
-              if (Model.schema.paths.name) {
+              if (Model.schema.paths[key].options.searchField) {
+                re.displayField = Model.schema.paths[key].options.searchField;
+              } else if (Model.schema.paths.name) {
                 rel.displayField = 'name';
               } else if (Model.schema.paths.title) {
                 rel.displayField = 'title';
@@ -275,7 +277,7 @@ var Administrate  = (function() {
           res.json({ success: true });
         });
       },
-      search: function(req, res) {
+      search: function(req, res, next) {
         var query = {};
         var opts;
         var limit = parseInt(req.query.limit, 10) || 25;
@@ -485,7 +487,7 @@ var Administrate  = (function() {
 
       if ((Array.isArray(this.options.models) && this.options.models.length > 0) || (Object.keys(this.options.models).length > 0)) {
         _.each(this.options.models, function(model, key) {
-          _private.models[key.toLowerCase()] = model;
+          _private.models[pluralize(key.toLowerCase(), 1)] = model;
           modelNames.push(model.schema.modelName);
         });
         return callback(null, modelNames);
