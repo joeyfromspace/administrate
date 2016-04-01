@@ -1,55 +1,17 @@
 extends ./layout
 
-mixin populate(doc)
-  -var subdoc;
-  -var shouldSplitValue;
-  tr
-    td: a(href=baseUrl + '/' + title.toLowerCase() + '/' + doc.id)=doc.id
-    if sortOrder
-      each key in sortOrder
-        if key !== 'id'
-          if typeof doc[key] !== 'object' || Object.is(doc[key], null)
-            td=doc[key]
-          else
-            if doc[key]._id
-              -subdoc = doc[key];
-              td: a(href=baseUrl + '/' + _.pluralize(key, 2) + '/' + subdoc._id.toString())=subdoc.name ? subdoc.name : (subdoc.title ? subdoc.title : (subdoc.label ? subdoc.label : subdoc._id.toString()))
-            else
-              td=doc[key]
-    else
-      each value, key in inputs
-        if key !== 'id'
-          if typeof doc[key] !== 'object'
-            td=doc[key]
-          else
-            if doc[key]._id
-              td: a(href=baseUrl + '/' + _.pluralize(key, 2) + '/' + doc[key]._id.toString())=doc[key].name ? doc[key].name : (doc[key].title ? doc[key].title : (doc[key].label ? doc[key].label : doc[key]._id.toString()))
-            else
-              td=doc[key]
-
 block content
   .container
     .row: .col-xs-12: h1=title + ' List'
     .row: #filter-container
     .row: .col-xs-12
       table.table#results-table
-        thead: tr
-          th(data-key='_id')='id '
-            span.glyphicon.glyphicon-sort
-          if sortOrder
-            each key in sortOrder
-              if key !== 'id'
-                th(data-key=key)=_.toProperCase(key) + ' '
-                  span.glyphicon.glyphicon-sort
-          else
-            each value, key in inputs
-              if key !== 'id'
-                th(data-key=key)=_.toProperCase(key) + ' '
-                  span.glyphicon.glyphicon-sort
+        -var sort = sortOrder ? sortOrder : inputs
+        +list-header(sort)
         tbody
           if collection
             each member, index in collection
-              +populate(member)
+              +populate(member, sort)
     .row
       .col-md-2: a.btn.btn-info.btn-lg.btn-block(href=baseUrl + '/' + title.toLowerCase() + '/new') &plus; Add New
       .col-md-2: a.btn.btn-default.btn-lg.btn-block(href=baseUrl) Back

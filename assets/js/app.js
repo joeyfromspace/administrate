@@ -26,7 +26,7 @@ var router = new _router2.default();
 var baseUrl = ADMIN_LOCALS.baseUrl;
 
 router.add('*', _webfont2.default, _config2.default.webFonts);
-router.add(baseUrl + '/:model', _list2.default);
+router.add(baseUrl + '/:model', _list2.default, '#results-table');
 
 router.resolve();
 
@@ -258,10 +258,10 @@ var ERROR_TEXT = 'There was a problem retrieving the data';
 var ListController = function (_Controller) {
   _inherits(ListController, _Controller);
 
-  function ListController() {
+  function ListController(element) {
     _classCallCheck(this, ListController);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ListController).call(this));
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ListController).call(this, element));
 
     _this.applySort = _underscore2.default.throttle(_this._applySort, 1000);
     _this.query = ListController.queryFactory();
@@ -273,7 +273,7 @@ var ListController = function (_Controller) {
     value: function load() {
       var _this2 = this;
 
-      this.resultsContainer = document.getElementById('results-table');
+      this.resultsContainer = this.element;
       this.tbody = this.resultsContainer.querySelector('tbody');
       this.parseUrl();
       this.listenSortClick();
@@ -312,16 +312,6 @@ var ListController = function (_Controller) {
       this.filterController.load();
     }
   }, {
-    key: '_req',
-    value: function _req(req, callback) {
-      var query = _underscore2.default.pairs(req);
-      query = _underscore2.default.map(query, function (q) {
-        return q.join('=');
-      }).join('&');
-
-      _browserRequest2.default.get({ url: JSON_API_PREFIX + '?' + query, json: true }, callback);
-    }
-  }, {
     key: '_destroyData',
     value: function _destroyData() {
       var rows = this.resultsContainer.querySelectorAll('tbody tr,div');
@@ -346,7 +336,7 @@ var ListController = function (_Controller) {
 
       this._destroyData().then(function () {
         _this3.tbody.appendChild(_this3.loader);
-        _this3._req(query, _this3.render.bind(_this3));
+        ListController._req(query, _this3.render.bind(_this3));
       });
     }
   }, {
@@ -468,9 +458,19 @@ var ListController = function (_Controller) {
         page: 1,
         limit: 25,
         populateRelationships: true,
-        sortBy: undefined,
+        sortBy: 'createdAt',
         sortDir: 'asc'
       };
+    }
+  }, {
+    key: '_req',
+    value: function _req(req, callback) {
+      var query = _underscore2.default.pairs(req);
+      query = _underscore2.default.map(query, function (q) {
+        return q.join('=');
+      }).join('&');
+
+      _browserRequest2.default.get({ url: JSON_API_PREFIX + '?' + query, json: true }, callback);
     }
   }]);
 

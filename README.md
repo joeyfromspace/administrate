@@ -66,6 +66,8 @@ Tests. They don't exist.
 
 ##Changelog
 
+**04-01-2016**: Many a bug squashed. Sub-documents now supported. Default sorting by createdAt if available in schema.
+
 **03-31-2016**: Added filtration, improved sorting and pagination, frontend bug fixes
 
 **03-29-2016**: Updated list view with pagination and sorting.

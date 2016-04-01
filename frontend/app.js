@@ -11,6 +11,6 @@ const router = new Router();
 const baseUrl = ADMIN_LOCALS.baseUrl;
 
 router.add('*', WebFontController, config.webFonts);
-router.add(baseUrl + '/:model', ListController);
+router.add(baseUrl + '/:model', ListController, '#results-table');
 
 router.resolve();

@@ -1,7 +1,42 @@
 (function() {
   'use strict';
-  const DEFAULT_REQUEST_PATH = ADMIN_LOCALS.baseUrl + '/' + ADMIN_LOCALS.modelNamePlural;
+  const ALERT_TIMEOUT = 5000;
   const UPDATE_COOLDOWN = 5000;
+  const IS_SUB_SCHEMA = ADMIN_LOCALS.isSubSchema;
+  const SUB_SCHEMA_NAME = ADMIN_LOCALS.subSchemaName;
+  const PARENT_ID = ADMIN_LOCALS.parentId || false;
+  const DEFAULT_REQUEST_PATH = ADMIN_LOCALS.baseUrl + '/' + ADMIN_LOCALS.modelNamePlural + (IS_SUB_SCHEMA ? '/' + PARENT_ID + '/' + SUB_SCHEMA_NAME : '');
+
+  const alertMessage = function(messages, type) {
+    let element = document.createElement('div');
+
+    if (!Array.isArray(messages)) {
+      messages = [messages];
+    }
+
+    if (!type) {
+      type = 'danger';
+    }
+
+    element.classList.add('alert', 'alert-' + type);
+    element.style.position = 'absolute';
+
+    element.style.top = '70px';
+    element.style.left = '50%';
+    element.style.width = '50%';
+    element.style.transform = 'translateX(-50%)';
+    element.innerText = '';
+
+    messages.forEach(function(message) {
+      element.innerHTML += '<p>' + message + '</p>';
+    });
+
+    document.body.appendChild(element);
+
+    setTimeout(function() {
+      element.remove();
+    }, ALERT_TIMEOUT);
+  };
   let buttons;
   let inputs;
   let selectizes;
@@ -23,8 +58,11 @@
       const handlers = {
         load: (e) => {
           let response = JSON.parse(e.currentTarget.responseText);
+          if (response.error) {
+            return alertMessage(response.details ? [response.error].concat(response.details) : [response.error]);
+          }
           if (method === 'DELETE') {
-            return location.assign(DEFAULT_REQUEST_PATH);
+            return location.assign(IS_SUB_SCHEMA ? '/' + ADMIN_LOCALS.baseUrl + '/' + ADMIN_LOCALS.modelNamePlural + '/' + PARENT_ID : DEFAULT_REQUEST_PATH);
           }
           if (method === 'POST') {
             return location.assign(DEFAULT_REQUEST_PATH + '/' + response._id);
@@ -53,7 +91,7 @@
       controller.setBusy(true);
       xhr = new XMLHttpRequest();
       method = method.toUpperCase();
-      requestPath = (method === 'POST' ? DEFAULT_REQUEST_PATH : DEFAULT_REQUEST_PATH + '/' + controller.model._id);
+      requestPath = (method === 'POST' ? DEFAULT_REQUEST_PATH : DEFAULT_REQUEST_PATH + (controller.model && controller.model._id ? '/' + controller.model._id : ''));
 
       Object.keys(handlers).forEach((handler) => {
         xhr.addEventListener(handler, handlers[handler]);

@@ -80,4 +80,45 @@ mixin header(brand, user, baseUrl, modules, active, logoutLink)
             li: p.navbar-text Logged in as #{user.email || user.name || user.username || user.userName}
             if logoutLink
               a.btn.btn-info.navbar-btn(href=logoutLink) Logout
-      
+
+mixin list-header(paths)
+  thead: tr
+    th(data-key='_id')='id '
+      span.glyphicon.glyphicon-sort
+    if Array.isArray(paths)
+      each key in paths
+        if key !== 'id'
+          th(data-key=key)=_.toProperCase(key) + ' '
+            span.glyphicon.glyphicon-sort
+    else
+      each value, key in paths
+        if key !== 'id'
+          th(data-key=key)=_.toProperCase(key) + ' '
+            span.glyphicon.glyphicon-sort
+
+mixin populate(doc, paths, urlPrefix)
+  -var subdoc;
+  -var shouldSplitValue;
+  tr
+    td: a(href=baseUrl + '/' + _.pluralize(title.toLowerCase(), 2) + (urlPrefix ? '/' + urlPrefix : '' ) + '/' + doc.id)=doc.id
+    if Array.isArray(paths)
+      each key in paths
+        if key !== 'id'
+          if typeof doc[key] !== 'object' || Object.is(doc[key], null)
+            td=doc[key]
+          else
+            if doc[key]._id
+              -subdoc = doc[key];
+              td: a(href=baseUrl + '/' + _.pluralize(key, 2) + '/' + subdoc._id.toString())=subdoc.name ? subdoc.name : (subdoc.title ? subdoc.title : (subdoc.label ? subdoc.label : subdoc._id.toString()))
+            else
+              td=doc[key]
+    else
+      each value, key in paths
+        if key !== 'id'
+          if typeof doc[key] !== 'object' || Object.is(null, doc[key])
+            td=doc[key]
+          else
+            if doc[key]._id
+              td: a(href=baseUrl + (urlPrefix || '') + '/' + _.pluralize(key, 2) + '/' + doc[key]._id.toString())=doc[key].name ? doc[key].name : (doc[key].title ? doc[key].title : (doc[key].label ? doc[key].label : doc[key]._id.toString()))
+            else
+              td=doc[key]

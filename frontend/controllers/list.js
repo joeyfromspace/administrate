@@ -18,8 +18,8 @@ const ANIMATION_EASING = 'linear';
 const ERROR_TEXT = 'There was a problem retrieving the data';
 
 class ListController extends Controller {
-  constructor() {
-    super();
+  constructor(element) {
+    super(element);
 
     this.applySort = _.throttle(this._applySort, 1000);
     this.query = ListController.queryFactory();
@@ -30,13 +30,13 @@ class ListController extends Controller {
       page: 1,
       limit: 25,
       populateRelationships: true,
-      sortBy: undefined,
+      sortBy: 'createdAt',
       sortDir: 'asc'
     };
   }
 
   load() {
-    this.resultsContainer = document.getElementById('results-table');
+    this.resultsContainer = this.element;
     this.tbody = this.resultsContainer.querySelector('tbody');
     this.parseUrl();
     this.listenSortClick();
@@ -76,7 +76,7 @@ class ListController extends Controller {
   }
 
 
-  _req(req, callback) {
+  static _req(req, callback) {
     let query = _.pairs(req);
     query = _.map(query, (q) => {
       return q.join('=');
@@ -105,7 +105,7 @@ class ListController extends Controller {
 
     this._destroyData().then(() => {
       this.tbody.appendChild(this.loader);
-      this._req(query, this.render.bind(this));
+      ListController._req(query, this.render.bind(this));
     });
   }
 

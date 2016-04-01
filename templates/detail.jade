@@ -3,22 +3,41 @@ extends ./layout
 block content
   .container
     .row: .col-xs-12.col-md-offset-2.col-md-10
-      h1=title + ' Detail'
+      h1=title + (isSubSchema ? ' ' + _.toProperCase(subSchemaName) : '') + ' Detail'
     .row: .col-xs-12.col-md-offset-2.col-md-10
       h2!=model.name || model.title || model.label || '&nbsp;'
         if model._id
           small.pull-right='id: ' + model._id.toString()
-    .row: .col-xs-12: form.form-horizontal
-      each input in inputs
-        +form-input(input, model)
-      .form-group
-        .col-md-offset-2.col-md-1: button.btn.btn-info.btn-block(type="save" name="save") Save                
-        .col-md-1: a.btn.btn-default.btn-block(type="back" name="back" href=baseUrl + '/' + _.pluralize(title.toLowerCase(), 2)) Back
-        .col-md-1.pull-right: button.btn.btn-danger.btn-block(type="remove" name="remove") Delete
+    if inputs
+      .row: .col-xs-12: form.form-horizontal
+        each input in inputs
+          +form-input(input, model)
+        .form-group
+          .col-md-offset-2.col-md-1: button.btn.btn-info.btn-block(type="save" name="save") Save
+          .col-md-1: a.btn.btn-default.btn-block(type="back" name="back" href=baseUrl + '/' + _.pluralize(title.toLowerCase(), 2) + (isSubSchema ? '/' + parentId : '')) Back
+          .col-md-1.pull-right: button.btn.btn-danger.btn-block(type="remove" name="remove") Delete
+    if subdocs
+      .row: .col-xs-12.col-md-offset-2.col-md-10
+        each subdoc, name in subdocs
+          h3=_.pluralize(_.toProperCase(name))
+          table.table(id=name + '-subdocs-table')
+            +list-header(subdoc.inputs)
+            tbody
+              if model[name] && model[name].length
+                each item in model[name]
+                  +populate(item, subdoc.inputs, (model._id.toString() + '/' + _.pluralize(name.toLowerCase(), 2)))
+              else
+                tr: td.text-center(colspan="#{(Object.keys(subdoc.inputs).length + 1)}")='No ' + _.pluralize(_.toProperCase(name)) + ' found'
+          if model._id
+            a.btn.btn-info.btn-block(href=baseUrl + '/' + _.pluralize(title.toLowerCase(), 2) + '/' + model._id.toString() + '/' + _.pluralize(name, 2) + '/new')!='&plus; New ' + _.toProperCase(_.pluralize(name, 1))
+
 block scripts
   script.
     window.ADMIN_LOCALS.model = !{JSON.stringify(model)};
     window.ADMIN_LOCALS.modelName = "#{title.toLowerCase()}";
     window.ADMIN_LOCALS.modelNamePlural = "#{_.pluralize(title.toLowerCase(), 2)}";
+    window.ADMIN_LOCALS.isSubSchema = !{isSubSchema};
+    window.ADMIN_LOCALS.subSchemaName = "#{subSchemaName}";
+    window.ADMIN_LOCALS.parentId = "#{parentId}";
   script(src=baseUrl + '/js/admin-selectize.js')
   script(src=baseUrl + '/js/detail.js')
