@@ -57,7 +57,7 @@ var Administrate  = (function() {
       var inputs = {};
       var subdocs = {};
       async.forEachOf(schema.paths, (path, name, done) => {
-        var type, ref;
+        var type, ref, displayField;
 
         if (path.options.hidden || _private.options.pathBlacklist.indexOf(name) >= 0) {
           return done();
@@ -84,6 +84,7 @@ var Administrate  = (function() {
             if (path.options.hasOwnProperty('ref')) {
               type = 'relationship';
               ref = path.options.ref.toLowerCase();
+              displayField = path.options.searchField;
             }
             break;
 
@@ -107,6 +108,11 @@ var Administrate  = (function() {
         if (ref) {
           inputs[name].ref = ref;
         }
+
+        if (displayField) {
+          inputs[name].displayField = displayField;
+        }
+
         done();
       }, (err) => {
         if (err) {
@@ -193,8 +199,9 @@ var Administrate  = (function() {
             Model.findById(res.locals.model[key]).exec((err, doc) => {
               res.locals.model[key] = doc ? doc : {};
 
-              if (Model.schema.paths[key].options.searchField) {
-                re.displayField = Model.schema.paths[key].options.searchField;
+              if (rel.displayField) {
+                res.locals.inputs[key] = rel;
+                return done(err);
               } else if (Model.schema.paths.name) {
                 rel.displayField = 'name';
               } else if (Model.schema.paths.title) {

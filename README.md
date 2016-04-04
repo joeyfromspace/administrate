@@ -52,6 +52,9 @@ Administrate supports a few options that affect how Schema paths are displayed a
 ###Filter Support
 Add `filter: true` to a schema path to make it filterable in the admin view.
 
+###Search fields
+Add `searchField: [path]` to search and display values by in a `ref` path.
+
 ###Textarea Support
 Add `extended: true` to your `String` schema paths to display a textarea in the admin interface instead of a single text input. Useful for editing blog posts and other larger bodies of text.
 
@@ -65,6 +68,7 @@ Add `edit: false` to any Schema path to have a path disabled on the front-end.
 Tests. They don't exist.
 
 ##Changelog
+**04-04-2016**: In ObjectID ref paths, you may now specify a `searchField` to search by in Detail views.
 
 **04-01-2016**: Many a bug squashed. Sub-documents now supported. Default sorting by createdAt if available in schema.
 
